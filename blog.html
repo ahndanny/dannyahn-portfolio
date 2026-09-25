@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog — Danny Ahn</title>
+    <meta name="description" content="Articles and insights on cybersecurity, cloud infrastructure, data systems, and enterprise architecture by Danny Ahn.">
+    
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Blog — Danny Ahn">
+    <meta property="og:description" content="Articles and insights on cybersecurity, cloud infrastructure, data systems, and enterprise architecture by Danny Ahn.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" style="position:absolute;z-index:-1;top:8px;left:16px">
+        <rect width="32" height="32" rx="6" fill="#0a0e17"/>
+        <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="16" fill="url(#g)">D</text>
+        <defs><linearGradient id="g" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#4f8fff"/><stop offset="100%" stop-color="#00e5ff"/></linearGradient></defs>
+    </svg>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+    <div class="container nav-inner">
+        <a href="index.html" class="logo">DA<span>.</span></a>
+        
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">
+            <span></span><span></span><span></span>
+        </button>
+        
+        <!-- Desktop Nav -->
+        <ul class="nav-links desktop-nav">
+            <li><a href="about.html" class="nav-link">About</a></li>
+            <li><a href="blog.html" class="nav-link active">Blog</a></li>
+            <li><a href="videos.html" class="nav-link">Videos</a></li>
+        </ul>
+        
+        <!-- Mobile Nav -->
+        <div class="mobile-nav" id="mobileNav">
+            <a href="about.html" class="mobile-nav-link">About</a>
+            <a href="blog.html" class="mobile-nav-link active">Blog</a>
+            <a href="videos.html" class="mobile-nav-link">Videos</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Blog Section -->
+<section id="blog" class="content-section blog-page-section">
+    <div class="container section-container">
+        <h2>Blog</h2>
+        
+        <p style="color: var(--text-secondary); font-size: 1.05rem; max-width: 680px; margin: 0 auto 32px;">
+            Thoughts on technology, cybersecurity, and building systems that matter.
+        </p>
+        
+        <!-- Blog Category Filter -->
+        <div class="blog-filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="cybersecurity">Cybersecurity</button>
+            <button class="filter-btn" data-filter="cloud">Cloud</button>
+            <button class="filter-btn" data-filter="data-systems">Data Systems</button>
+        </div>
+        
+        <!-- Blog Grid -->
+        <div class="blog-grid">
+            <!-- Blog Card 1 -->
+            <article class="blog-card" data-category="cybersecurity">
+                <div class="blog-tag">Cybersecurity</div>
+                <h3 class="blog-title">Understanding Zero Trust Architecture in Modern Enterprises</h3>
+                <p class="blog-excerpt">How zero trust principles are reshaping enterprise security from the ground up. A deep dive into identity verification, microsegmentation, and continuous monitoring.</p>
+                <span class="blog-date gradient-text">Coming Soon</span>
+            </article>
+            
+            <!-- Blog Card 2 -->
+            <article class="blog-card" data-category="cloud">
+                <div class="blog-tag">Cloud</div>
+                <h3 class="blog-title">Multi-Cloud Strategies That Actually Work</h3>
+                <p class="blog-excerpt">Why most multi-cloud implementations fail and how to build one that scales. Lessons from managing AWS, Azure, and GCP across enterprise environments.</p>
+                <span class="blog-date gradient-text">Coming Soon</span>
+            </article>
+            
+            <!-- Blog Card 3 -->
+            <article class="blog-card" data-category="data-systems">
+                <div class="blog-tag">Data Systems</div>
+                <h3 class="blog-title">Building Data Pipelines That Don't Break at Scale</h3>
+                <p class="blog-excerpt">Lessons learned from managing data infrastructure across enterprise environments. From ETL design to real-time streaming architectures.</p>
+                <span class="blog-date gradient-text">Coming Soon</span>
+            </article>
+            
+            <!-- Blog Card 4 -->
+            <article class="blog-card" data-category="cybersecurity">
+                <div class="blog-tag">Cybersecurity</div>
+                <h3 class="blog-title">Threat Modeling for Modern Applications</h3>
+                <p class="blog-excerpt">A practical guide to threat modeling using STRIDE methodology. How to identify vulnerabilities before they become incidents.</p>
+                <span class="blog-date gradient-text">Coming Soon</span>
+            </article>
+            
+            <!-- Blog Card 5 -->
+            <article class="blog-card" data-category="cloud">
+                <div class="blog-tag">Cloud</div>
+                <h3 class="blog-title">Infrastructure as Code: Beyond the Basics</h3>
+                <p class="blog-excerpt">Moving past simple Terraform scripts to production-grade IaC with state management, modular design, and CI/CD integration.</p>
+                <span class="blog-date gradient-text">Coming Soon</span>
+            </article>
+            
+            <!-- Blog Card 6 -->
+            <article class="blog-card" data-category="data-systems">
+                <div class="blog-tag">Data Systems</div>
+                <h3 class="blog-title">Database Architecture for High-Concurrency Systems</h3>
+                <p class="blog-excerpt">Designing databases that handle millions of concurrent connections. Sharding, replication strategies, and consistency models.</p>
+                <span class="blog-date gradient-text">Coming Soon</span>
+            </article>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="pagination">
+            <a href="#" class="page-link active">1</a>
+            <a href="#" class="page-link">2</a>
+            <a href="#" class="page-link">3</a>
+            <span class="page-ellipsis">...</span>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contact" class="content-section contact-section">
+    <div class="container section-container">
+        <h2>Contact</h2>
+        
+        <p style="color: var(--text-secondary); font-size: 1.05rem; max-width: 680px; margin: 0 auto 32px;">
+            Interested in working together? Let's talk about your technology and data challenges.
+        </p>
+        
+        <div class="contact-grid">
+            <a href="mailto:danny@dannyahn.com" class="contact-card">
+                <span class="contact-icon">📧</span>
+                <h4>Email</h4>
+                <p>danny@dannyahn.com</p>
+            </a>
+            
+            <a href="https://linkedin.com/in/danny-ahn" target="_blank" rel="noopener noreferrer" class="contact-card">
+                <span class="contact-icon">💼</span>
+                <h4>LinkedIn</h4>
+                <p>Connect on LinkedIn</p>
+            </a>
+            
+            <a href="https://github.com/ahndanny" target="_blank" rel="noopener noreferrer" class="contact-card">
+                <span class="contact-icon">🐙</span>
+                <h4>GitHub</h4>
+                <p>View my projects</p>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container footer-inner">
+        <p>&copy; 2025 Danny Ahn. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+// Mobile Menu Toggle
+const mobileToggle = document.getElementById('mobileToggle');
+const mobileNav = document.getElementById('mobileNav');
+
+if (mobileToggle && mobileNav) {
+    mobileToggle.addEventListener('click', () => {
+        mobileNav.classList.toggle('active');
+        mobileToggle.classList.toggle('active');
+    });
+    
+    // Close menu when clicking a link
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            mobileNav.classList.remove('active');
+            mobileToggle.classList.remove('active');
+        });
+    });
+}
+
+// Blog Category Filter
+const filterBtns = document.querySelectorAll('.filter-btn');
+const blogCards = document.querySelectorAll('.blog-card');
+
+filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const filter = btn.dataset.filter;
+        
+        // Update active button
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Filter cards
+        blogCards.forEach(card => {
+            if (filter === 'all' || card.dataset.category === filter) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+});
+
+// Fade-in on scroll
+const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('fade-in');
+            observer.unobserve(entry.target);
+        }
+    });
+}, observerOptions);
+
+document.querySelectorAll('.blog-card').forEach(el => {
+    observer.observe(el);
+});
+</script>
+
+</body>
+</html>
