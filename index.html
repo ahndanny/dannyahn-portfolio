@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danny Ahn — Technology & Data Systems</title>
+    <meta name="description" content="Danny Ahn is a technology and data systems professional based in Las Vegas with expertise in MIS, infrastructure analysis, and business technology solutions.">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <header class="site-header">
+        <nav class="container nav-container">
+            <div class="logo">Danny Ahn</div>
+            
+            <!-- Desktop Nav -->
+            <ul class="nav-links desktop-nav">
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#expertise" class="nav-link">Expertise</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+
+            <!-- Mobile Hamburger -->
+            <button class="hamburger-menu" aria-label="Toggle navigation">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </nav>
+
+        <!-- Mobile Nav Overlay -->
+        <div class="mobile-nav-overlay">
+            <ul class="mobile-nav-links">
+                <li><a href="#about" class="mobile-nav-link">About</a></li>
+                <li><a href="#expertise" class="mobile-nav-link">Expertise</a></li>
+                <li><a href="#contact" class="mobile-nav-link">Contact</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Hero Section (Split Screen) -->
+    <section class="hero hero-split">
+        <div class="container hero-container">
+            <div class="hero-photo-wrapper">
+                <div class="hero-photo-placeholder">
+                    <span class="photo-icon">👤</span>
+                    <p class="photo-hint">Add your photo here</p>
+                </div>
+            </div>
+            
+            <div class="hero-content">
+                <h1>Danny Ahn</h1>
+                <p class="tagline">Technology & Data Systems Professional</p>
+                <p class="subtitle">Las Vegas, Nevada</p>
+                
+                <a href="#about" class="cta-button">Learn More</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="content-section">
+        <div class="container section-container">
+            <h2>About</h2>
+            
+            <div class="narrative-block">
+                <p>I'm a technology and data systems professional with over a decade of experience building and managing business infrastructure. My path to tech wasn't conventional — it started with a deep dive into how data flows through large-scale systems.</p>
+                
+                <p>In 2012, I was involved in a case at MGM Mirage where I analyzed the casino's player club database system and identified vulnerabilities in their loyalty program infrastructure. While others saw slot machines, I saw a data pipeline — and I found a way to exploit it. The scheme cost the company roughly $864,000 in free play points converted to cash winnings.</p>
+                
+                <p>That experience taught me something valuable: when you understand how data moves through an organization's systems, you can see opportunities others miss. It was a risk that cost me time and money, but it gave me practical insight into data architecture that I've applied ever since.</p>
+                
+                <p>Since then, I've worked across multiple technology sectors — from real estate management information systems to gadget retail operations. My background spans:</p>
+            </div>
+
+            <ul class="experience-list">
+                <li><strong>Goodman Realty Group</strong> — Manager, Management Information Systems</li>
+                <li><strong>GadgetMates</strong> — Manager, Technology Operations</li>
+                <li><strong>EDmin.com</strong> — Technology & Data Management</li>
+                <li><strong>Device Pitstop</strong> — Technical Operations</li>
+            </ul>
+
+            <p>I hold a Bachelor's degree in Management Information Systems and have spent the last decade applying that foundation to real-world business technology challenges. I'm particularly interested in data infrastructure, system optimization, and the intersection of technology with consumer-facing industries.</p>
+        </div>
+    </section>
+
+    <!-- Expertise Section -->
+    <section id="expertise" class="content-section">
+        <div class="container section-container">
+            <h2>Expertise</h2>
+            
+            <div class="expertise-grid">
+                <div class="expertise-card">
+                    <div class="card-icon">📊</div>
+                    <h3>Data Systems Analysis</h3>
+                    <p>Analyzing data flows, identifying patterns and vulnerabilities in business information systems.</p>
+                </div>
+                
+                <div class="expertise-card">
+                    <div class="card-icon">⚙️</div>
+                    <h3>MIS & Infrastructure</h3>
+                    <p>Building and managing management information systems for organizations of various sizes.</p>
+                </div>
+                
+                <div class="expertise-card">
+                    <div class="card-icon">🔧</div>
+                    <h3>Technology Operations</h3>
+                    <p>Managing technical operations across retail, real estate, and consumer technology sectors.</p>
+                </div>
+                
+                <div class="expertise-card">
+                    <div class="card-icon">💡</div>
+                    <h3>Business Technology Strategy</h3>
+                    <p>Leveraging technical expertise to drive business process improvement and innovation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="content-section">
+        <div class="container section-container">
+            <h2>Contact</h2>
+            
+            <div class="contact-info">
+                <p>Based in Las Vegas, Nevada. Open to opportunities in technology and data systems.</p>
+                
+                <ul class="contact-links">
+                    <li><strong>Email:</strong> <a href="mailto:danny@example.com" class="link-with-arrow">danny@example.com</a></li>
+                    <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/in/danny-ahn-b0525aa" target="_blank" rel="noopener noreferrer" class="link-with-arrow">linkedin.com/in/danny-ahn-b0525aa</a></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2026 Danny Ahn. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Mobile Nav Toggle Script -->
+    <script>
+        const hamburger = document.querySelector('.hamburger-menu');
+        const mobileNav = document.querySelector('.mobile-nav-overlay');
+        
+        if (hamburger && mobileNav) {
+            hamburger.addEventListener('click', () => {
+                mobileNav.classList.toggle('active');
+                hamburger.classList.toggle('active');
+            });
+
+            // Close mobile nav when clicking a link
+            document.querySelectorAll('.mobile-nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileNav.classList.remove('active');
+                    hamburger.classList.remove('active');
+                });
+            });
+        }
+    </script>
+</body>
+</html>
