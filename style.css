@@ -539,6 +539,66 @@ strong, em {
 }
 
 /* ============================================
+   PARTICLE CANVAS BACKGROUND
+   ============================================ */
+#particle-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* ============================================
+   STAT CARD ICONS
+   ============================================ */
+.stat-icon {
+    display: block;
+    width: 28px;
+    height: 28px;
+    margin-bottom: 12px;
+    color: var(--accent-cyan);
+}
+
+/* ============================================
+   BLOG CARD IMAGES
+   ============================================ */
+.blog-image-container {
+    width: 100%;
+    height: 160px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.blog-image-container svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* ============================================
+   CONTACT SVG ICONS
+   ============================================ */
+.contact-icon-svg {
+    display: block;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 16px;
+    color: var(--accent-blue);
+}
+
+/* ============================================
+   GSAP LETTER ANIMATION CLASSES
+   ============================================ */
+.letter {
+    display: inline-block;
+    will-change: transform, opacity;
+}
+
+/* ============================================
    CONTENT SECTIONS (Blog/Video Previews)
    ============================================ */
 .content-section {
