@@ -27,6 +27,13 @@
 </head>
 <body>
 
+<!-- Grain Texture Overlay -->
+<div class="grain-overlay" aria-hidden="true"></div>
+
+<!-- Custom Cursor (desktop only) -->
+<div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+<div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
+
 <!-- Navigation -->
 <nav class="nav">
     <div class="container nav-inner">
@@ -247,27 +254,9 @@
     </div>
 </footer>
 
+<script src="main.js"></script>
 <script>
-// Mobile Menu Toggle
-const mobileToggle = document.getElementById('mobileToggle');
-const mobileNav = document.getElementById('mobileNav');
-
-if (mobileToggle && mobileNav) {
-    mobileToggle.addEventListener('click', () => {
-        mobileNav.classList.toggle('active');
-        mobileToggle.classList.toggle('active');
-    });
-    
-    // Close menu when clicking a link
-    document.querySelectorAll('.mobile-nav-link').forEach(link => {
-        link.addEventListener('click', () => {
-            mobileNav.classList.remove('active');
-            mobileToggle.classList.remove('active');
-        });
-    });
-}
-
-// Fade-in on scroll
+// Page-specific: fade-in on scroll for expertise cards & timeline
 const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {

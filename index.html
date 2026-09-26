@@ -4,30 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Danny Ahn — Technology & Data Systems</title>
-    <meta name="description" content="Danny Ahn is a technology and data systems professional with deep expertise in cybersecurity, cloud infrastructure, and enterprise architecture.">
+    <meta name="description" content="Danny Ahn is a technology and data systems professional with 20+ years of expertise in cybersecurity, cloud infrastructure, and enterprise architecture.">
     
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Danny Ahn — Technology & Data Systems">
-    <meta property="og:description" content="Technology and data systems professional with deep expertise in cybersecurity, cloud infrastructure, and enterprise architecture.">
+    <meta property="og:description" content="20+ years in cybersecurity, cloud infrastructure, and enterprise architecture. Building systems that scale.">
+    
+    <!-- AI Readability: JSON-LD Person Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Danny Ahn",
+      "url": "https://dannyahn.com",
+      "jobTitle": "Technology & Data Systems Professional",
+      "description": "Technology and data systems professional with 20+ years of expertise in cybersecurity, cloud infrastructure, and enterprise architecture.",
+      "email": "mailto:danny@dannyahn.com",
+      "sameAs": [
+        "https://linkedin.com/in/danny-ahn",
+        "https://github.com/ahndanny"
+      ],
+      "knowsAbout": ["Cybersecurity", "Cloud Infrastructure", "Enterprise Architecture", "Data Systems", "DevOps"]
+    }
+    </script>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
-    <!-- Favicon -->
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" style="position:absolute;z-index:-1;top:8px;left:16px">
-        <rect width="32" height="32" rx="6" fill="#0a0e17"/>
-        <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="16" fill="url(#g)">D</text>
-        <defs><linearGradient id="g" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#4f8fff"/><stop offset="100%" stop-color="#00e5ff"/></linearGradient></defs>
-    </svg>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- Navigation -->
+<!-- Grain Texture Overlay -->
+<div class="grain-overlay" aria-hidden="true"></div>
+
+<!-- Custom Cursor (desktop only) -->
+<div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+<div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
+
+<!-- Navigation — glassmorphic floating pill -->
 <nav class="nav">
     <div class="container nav-inner">
         <a href="index.html" class="logo">DA<span>.</span></a>
@@ -39,7 +57,7 @@
         
         <!-- Desktop Nav -->
         <ul class="nav-links desktop-nav">
-            <li><a href="about.html" class="nav-link active">About</a></li>
+            <li><a href="about.html" class="nav-link">About</a></li>
             <li><a href="blog.html" class="nav-link">Blog</a></li>
             <li><a href="videos.html" class="nav-link">Videos</a></li>
         </ul>
@@ -53,7 +71,9 @@
     </div>
 </nav>
 
-<!-- Hero / Landing Page -->
+<!-- ============================================
+     HERO — oversized kinetic typography
+     ============================================ -->
 <section id="hero" class="hero-section">
     <!-- Three.js Particle Canvas Background -->
     <canvas id="particle-canvas"></canvas>
@@ -61,82 +81,45 @@
     <!-- Animated Gradient Blobs -->
     <div class="blob blob-1"></div>
     <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
-    
-    <!-- Vertical Lines -->
-    <div class="vertical-lines">
-        <span></span><span></span><span></span><span></span><span></span>
-        <span></span><span></span><span></span><span></span><span></span>
-    </div>
-    
-    <!-- Grid Pattern -->
-    <div class="grid-pattern"></div>
     
     <div class="container hero-content">
-        <div class="hero-left">
-            <h1 class="hero-title" id="heroTitle">
-                <span class="gradient-text" id="nameText">Danny Ahn</span>
-            </h1>
-            
-            <p class="hero-subtitle" id="subtitleText">Technology & Data Systems</p>
-            
-            <p class="hero-description">
-                Cybersecurity, cloud infrastructure, and enterprise architecture — 
-                building systems that scale.
-            </p>
-            
-            <div class="hero-ctas">
-                <a href="about.html" class="btn btn-primary">About Me</a>
-                <a href="blog.html" class="btn btn-secondary">Read Blog</a>
-            </div>
-        </div>
+        <!-- Terminal-style eyebrow line -->
+        <p class="hero-eyebrow" id="eyebrowText">
+            <span class="terminal-prompt">~/</span>dannyahn<span class="cursor-blink">_</span>
+            <span class="eyebrow-sep">//</span> technology &amp; data systems
+        </p>
         
-        <div class="hero-right">
-            <!-- Animated Stats with SVG Icons -->
-            <div class="stat-card stat-1">
-                <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span class="stat-number gradient-text" id="counter1">0</span>
-                <span class="stat-label">Years Experience</span>
-            </div>
-            <div class="stat-card stat-2">
-                <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
-                </svg>
-                <span class="stat-number gradient-text" id="counter2">0</span>
-                <span class="stat-label">Projects Delivered</span>
-            </div>
-            <div class="stat-card stat-3">
-                <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
-                <span class="stat-number gradient-text" id="counter3">0</span>
-                <span class="stat-label">Users Impacted</span>
-            </div>
+        <h1 class="hero-title" id="heroTitle">
+            <span class="gradient-text" id="nameText">Danny Ahn</span>
+        </h1>
+        
+        <p class="hero-description" id="subtitleText">
+            Cybersecurity, cloud infrastructure &amp; enterprise architecture — 
+            building systems that scale.
+        </p>
+        
+        <div class="hero-ctas" id="ctaRow">
+            <a href="about.html" class="btn btn-primary magnetic">About Me</a>
+            <a href="blog.html" class="btn btn-secondary magnetic">Read Blog</a>
         </div>
     </div>
     
     <!-- Scroll Indicator -->
-    <div class="scroll-indicator">
-        <span></span>
-    </div>
+    <div class="scroll-indicator"><span></span></div>
 </section>
 
-<!-- Featured Blog Preview -->
-<section id="featured-blog" class="content-section blog-preview-section">
+<!-- ============================================
+     BENTO GRID — asymmetric tiles, active hover
+     ============================================ -->
+<section id="bento" class="content-section bento-section">
     <div class="container section-container">
-        <h2>Latest from the Blog</h2>
+        <h2 class="section-heading reveal-on-scroll">What I Do</h2>
         
-        <p style="color: var(--text-secondary); font-size: 1.05rem; max-width: 680px; margin: 0 auto 32px;">
-            Thoughts on technology, cybersecurity, and building systems that matter.
-        </p>
-        
-        <div class="blog-grid">
-            <!-- Blog Card 1 -->
-            <article class="blog-card">
-                <div class="blog-image-container">
-                    <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+        <div class="bento-grid">
+            <!-- Featured Blog Tile (large) -->
+            <a href="blog.html" class="bento-tile tile-blog magnetic-hover reveal-on-scroll">
+                <div class="tile-graphic">
+                    <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <defs>
                             <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
                                 <stop offset="0%" stop-color="#1a1a2e"/>
@@ -144,136 +127,86 @@
                             </linearGradient>
                         </defs>
                         <rect width="400" height="250" fill="url(#bg1)"/>
-                        <!-- Network nodes -->
                         <circle cx="80" cy="125" r="8" fill="#3b82f6" opacity="0.8"/>
                         <circle cx="200" cy="80" r="12" fill="#06b6d4" opacity="0.9"/>
                         <circle cx="320" cy="150" r="8" fill="#8b5cf6" opacity="0.8"/>
                         <line x1="80" y1="125" x2="200" y2="80" stroke="#3b82f6" stroke-width="1.5" opacity="0.4"/>
                         <line x1="200" y1="80" x2="320" y2="150" stroke="#06b6d4" stroke-width="1.5" opacity="0.4"/>
                         <line x1="80" y1="125" x2="320" y2="150" stroke="#8b5cf6" stroke-width="1" opacity="0.3"/>
-                        <!-- Shield icon -->
                         <path d="M200 40 L230 55 L230 90 L200 105 L170 90 L170 55 Z" fill="none" stroke="#06b6d4" stroke-width="2" opacity="0.6"/>
                         <path d="M195 70 L205 80 L215 65" fill="none" stroke="#06b6d4" stroke-width="2" opacity="0.8"/>
                     </svg>
                 </div>
-                <div class="blog-tag">Cybersecurity</div>
-                <h3 class="blog-title">Understanding Zero Trust Architecture in Modern Enterprises</h3>
-                <p class="blog-excerpt">How zero trust principles are reshaping enterprise security from the ground up...</p>
-                <a href="blog.html" class="blog-link">Read more →</a>
-            </article>
+                <div class="tile-content">
+                    <span class="tile-tag">Blog · Cybersecurity</span>
+                    <h3>Understanding Zero Trust Architecture in Modern Enterprises</h3>
+                    <p>How zero trust principles are reshaping enterprise security from the ground up.</p>
+                    <span class="tile-cta">Read post →</span>
+                </div>
+            </a>
             
-            <!-- Blog Card 2 -->
-            <article class="blog-card">
-                <div class="blog-image-container">
-                    <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+            <!-- Video Tile -->
+            <a href="videos.html" class="bento-tile tile-video magnetic-hover reveal-on-scroll">
+                <div class="video-thumb">
+                    <svg viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <defs>
-                            <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#1a1a2e"/>
-                                <stop offset="100%" stop-color="#0f3460"/>
+                            <linearGradient id="bgv" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#0f3460"/>
+                                <stop offset="100%" stop-color="#1a1a2e"/>
                             </linearGradient>
                         </defs>
-                        <rect width="400" height="250" fill="url(#bg2)"/>
-                        <!-- Cloud shapes -->
-                        <ellipse cx="120" cy="130" rx="50" ry="30" fill="#3b82f6" opacity="0.3"/>
-                        <ellipse cx="200" cy="110" rx="60" ry="35" fill="#06b6d4" opacity="0.3"/>
-                        <ellipse cx="290" cy="130" rx="50" ry="30" fill="#8b5cf6" opacity="0.3"/>
-                        <!-- Connection lines -->
-                        <line x1="170" y1="110" x2="230" y2="110" stroke="#fff" stroke-width="1" opacity="0.3" stroke-dasharray="4,4"/>
-                        <circle cx="120" cy="130" r="5" fill="#3b82f6" opacity="0.7"/>
-                        <circle cx="200" cy="110" r="5" fill="#06b6d4" opacity="0.7"/>
-                        <circle cx="290" cy="130" r="5" fill="#8b5cf6" opacity="0.7"/>
+                        <rect width="400" height="250" fill="url(#bgv)"/>
+                        <circle cx="200" cy="125" r="36" fill="rgba(255,255,255,0.08)" stroke="#06b6d4" stroke-width="2"/>
+                        <path d="M190 105 L220 125 L190 145 Z" fill="#06b6d4"/>
+                        <g opacity="0.35">
+                            <rect x="60" y="180" width="4" height="20" rx="2" fill="#3b82f6"/>
+                            <rect x="70" y="172" width="4" height="36" rx="2" fill="#3b82f6"/>
+                            <rect x="80" y="178" width="4" height="24" rx="2" fill="#06b6d4"/>
+                            <rect x="90" y="168" width="4" height="44" rx="2" fill="#06b6d4"/>
+                            <rect x="300" y="175" width="4" height="30" rx="2" fill="#8b5cf6"/>
+                            <rect x="310" y="182" width="4" height="16" rx="2" fill="#8b5cf6"/>
+                            <rect x="320" y="170" width="4" height="40" rx="2" fill="#8b5cf6"/>
+                        </g>
                     </svg>
                 </div>
-                <div class="blog-tag">Cloud</div>
-                <h3 class="blog-title">Multi-Cloud Strategies That Actually Work</h3>
-                <p class="blog-excerpt">Why most multi-cloud implementations fail and how to build one that scales...</p>
-                <a href="blog.html" class="blog-link">Read more →</a>
-            </article>
-        </div>
-        
-        <div style="text-align: center; margin-top: 40px;">
-            <a href="blog.html" class="btn btn-secondary">View All Posts</a>
-        </div>
-    </div>
-</section>
-
-<!-- Featured Video Preview -->
-<section id="featured-video" class="content-section video-preview-section">
-    <div class="container section-container">
-        <h2>Featured Videos</h2>
-        
-        <p style="color: var(--text-secondary); font-size: 1.05rem; max-width: 680px; margin: 0 auto 32px;">
-            Talks, tutorials, and deep dives on technology topics.
-        </p>
-        
-        <div class="video-grid">
-            <!-- Video Card 1 -->
-            <article class="video-card">
-                <div class="video-wrapper">
-                    <iframe 
-                        src="https://www.youtube.com/embed/VIDEO_ID_1" 
-                        title="Video 1" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe>
+                <div class="tile-content">
+                    <span class="tile-tag">Videos</span>
+                    <h3>Talks &amp; Deep Dives</h3>
+                    <p>Technical talks and tutorials on systems, security, and data.</p>
+                    <span class="tile-cta">Watch →</span>
                 </div>
-                <h3 class="video-title">Video Title Here</h3>
-                <p class="video-description">Brief description of the video content and key takeaways.</p>
-            </article>
-            
-            <!-- Video Card 2 -->
-            <article class="video-card">
-                <div class="video-wrapper">
-                    <iframe 
-                        src="https://www.youtube.com/embed/VIDEO_ID_2" 
-                        title="Video 2" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe>
-                </div>
-                <h3 class="video-title">Video Title Here</h3>
-                <p class="video-description">Brief description of the video content and key takeaways.</p>
-            </article>
-        </div>
-        
-        <div style="text-align: center; margin-top: 40px;">
-            <a href="videos.html" class="btn btn-secondary">View All Videos</a>
-        </div>
-    </div>
-</section>
-
-<!-- Contact Section -->
-<section id="contact" class="content-section contact-section">
-    <div class="container section-container">
-        <h2>Contact</h2>
-        
-        <p style="color: var(--text-secondary); font-size: 1.05rem; max-width: 680px; margin: 0 auto 32px;">
-            Interested in working together? Let's talk about your technology and data challenges.
-        </p>
-        
-        <div class="contact-grid">
-            <a href="mailto:danny@dannyahn.com" class="contact-card">
-                <svg class="contact-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                </svg>
-                <h4>Email</h4>
-                <p>danny@dannyahn.com</p>
             </a>
             
-            <a href="https://linkedin.com/in/danny-ahn" target="_blank" rel="noopener noreferrer" class="contact-card">
-                <svg class="contact-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/>
+            <!-- Stat Tiles -->
+            <div class="bento-tile tile-stat magnetic-hover reveal-on-scroll">
+                <span class="stat-number gradient-text" id="counter1">0</span>
+                <span class="stat-label">Years Experience</span>
+            </div>
+            
+            <div class="bento-tile tile-stat magnetic-hover reveal-on-scroll">
+                <span class="stat-number gradient-text" id="counter2">0</span>
+                <span class="stat-label">Projects Delivered</span>
+            </div>
+            
+            <!-- Expertise Tile -->
+            <a href="about.html#expertise" class="bento-tile tile-expertise magnetic-hover reveal-on-scroll">
+                <svg class="tile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <path d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
                 </svg>
-                <h4>LinkedIn</h4>
-                <p>Connect on LinkedIn</p>
+                <div class="tile-content">
+                    <span class="tile-tag">Expertise</span>
+                    <h3>Security · Cloud · Data</h3>
+                    <p>Six core competencies built over two decades.</p>
+                    <span class="tile-cta">Explore →</span>
+                </div>
             </a>
             
-            <a href="https://github.com/ahndanny" target="_blank" rel="noopener noreferrer" class="contact-card">
-                <svg class="contact-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/>
-                </svg>
-                <h4>GitHub</h4>
-                <p>View my projects</p>
+            <!-- CTA Tile (full width) -->
+            <a href="mailto:danny@dannyahn.com" class="bento-tile tile-cta magnetic-hover reveal-on-scroll">
+                <div class="tile-content cta-content">
+                    <h3>Let's build something that scales.</h3>
+                    <p>Open to consulting, collaborations, and interesting problems — danny@dannyahn.com</p>
+                </div>
             </a>
         </div>
     </div>
@@ -283,6 +216,10 @@
 <footer class="footer">
     <div class="container footer-inner">
         <p>&copy; 2026 Danny Ahn. All rights reserved.</p>
+        <div class="footer-links">
+            <a href="https://linkedin.com/in/danny-ahn" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            <a href="https://github.com/ahndanny" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </div>
     </div>
 </footer>
 
@@ -290,338 +227,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <!-- GSAP CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-
-<script>
-// ============================================
-// THREE.JS PARTICLE BACKGROUND
-// ============================================
-(function() {
-    const canvas = document.getElementById('particle-canvas');
-    if (!canvas) return;
-    
-    // Scene setup
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-    
-    // Responsive sizing
-    function resize() {
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        renderer.setSize(width, height);
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-    }
-    resize();
-    window.addEventListener('resize', resize);
-    
-    // Particle count based on device capability
-    const isMobile = window.innerWidth < 768;
-    const particleCount = isMobile ? 150 : 400;
-    
-    // Create particles
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(particleCount * 3);
-    const colors = new Float32Array(particleCount * 3);
-    const sizes = new Float32Array(particleCount);
-    
-    const colorPalette = [
-        new THREE.Color(0x3b82f6), // blue
-        new THREE.Color(0x06b6d4), // cyan
-        new THREE.Color(0x8b5cf6), // purple
-    ];
-    
-    for (let i = 0; i < particleCount; i++) {
-        positions[i * 3] = (Math.random() - 0.5) * 20;     // x
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 15; // y
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 10; // z
-        
-        const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
-        colors[i * 3] = color.r;
-        colors[i * 3 + 1] = color.g;
-        colors[i * 3 + 2] = color.b;
-        
-        sizes[i] = Math.random() * 0.05 + 0.02;
-    }
-    
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-    
-    // Custom shader material for glowing particles
-    const vertexShader = `
-        attribute float size;
-        varying vec3 vColor;
-        void main() {
-            vColor = color;
-            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-            gl_PointSize = size * (200.0 / -mvPosition.z);
-            gl_Position = projectionMatrix * mvPosition;
-        }
-    `;
-    
-    const fragmentShader = `
-        varying vec3 vColor;
-        void main() {
-            float dist = length(gl_PointCoord - vec2(0.5));
-            if (dist > 0.5) discard;
-            float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
-            gl_FragColor = vec4(vColor, alpha * 0.6);
-        }
-    `;
-    
-    const material = new THREE.ShaderMaterial({
-        vertexShader: vertexShader,
-        fragmentShader: fragmentShader,
-        transparent: true,
-        vertexColors: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending
-    });
-    
-    const particles = new THREE.Points(geometry, material);
-    scene.add(particles);
-    
-    // Connection lines between nearby particles
-    const lineGeometry = new THREE.BufferGeometry();
-    const linePositions = [];
-    const maxDist = 2.5;
-    
-    for (let i = 0; i < particleCount; i++) {
-        for (let j = i + 1; j < particleCount; j++) {
-            const dx = positions[i * 3] - positions[j * 3];
-            const dy = positions[i * 3 + 1] - positions[j * 3 + 1];
-            const dz = positions[i * 3 + 2] - positions[j * 3 + 2];
-            const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-            
-            if (dist < maxDist) {
-                linePositions.push(
-                    positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2],
-                    positions[j * 3], positions[j * 3 + 1], positions[j * 3 + 2]
-                );
-            }
-        }
-    }
-    
-    lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
-    const lineMaterial = new THREE.LineBasicMaterial({ 
-        color: 0x3b82f6, 
-        transparent: true, 
-        opacity: 0.15,
-        blending: THREE.AdditiveBlending
-    });
-    const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
-    scene.add(lines);
-    
-    camera.position.z = 5;
-    
-    // Mouse interaction
-    let mouseX = 0, mouseY = 0;
-    document.addEventListener('mousemove', (e) => {
-        mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-        mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
-    });
-    
-    // Animation loop
-    let animationId;
-    function animate() {
-        animationId = requestAnimationFrame(animate);
-        
-        particles.rotation.y += 0.001;
-        lines.rotation.y += 0.001;
-        
-        // Mouse parallax
-        camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.02;
-        camera.position.y += (-mouseY * 0.5 - camera.position.y) * 0.02;
-        camera.lookAt(scene.position);
-        
-        renderer.render(scene, camera);
-    }
-    
-    animate();
-    
-    // Pause when tab hidden (battery saving)
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            cancelAnimationFrame(animationId);
-        } else {
-            animate();
-        }
-    });
-})();
-
-// ============================================
-// GSAP KINETIC TYPOGRAPHY
-// ============================================
-(function() {
-    const nameEl = document.getElementById('nameText');
-    if (!nameEl || typeof gsap === 'undefined') return;
-    
-    // Split text into individual characters for animation
-    const text = nameEl.textContent;
-    nameEl.innerHTML = '';
-    
-    [...text].forEach((char, i) => {
-        const span = document.createElement('span');
-        span.className = 'letter';
-        span.style.display = 'inline-block';
-        span.style.opacity = '0';
-        span.style.transform = 'translateY(40px) rotateX(-90deg)';
-        span.textContent = char === ' ' ? '\u00A0' : char;
-        nameEl.appendChild(span);
-    });
-    
-    const letters = nameEl.querySelectorAll('.letter');
-    
-    // Animate each letter with stagger
-    gsap.to(letters, {
-        opacity: 1,
-        y: 0,
-        rotateX: 0,
-        duration: 0.8,
-        stagger: 0.05,
-        ease: 'back.out(1.7)',
-        delay: 0.3
-    });
-    
-    // Subtitle fade in
-    const subtitle = document.getElementById('subtitleText');
-    if (subtitle) {
-        gsap.from(subtitle, {
-            opacity: 0,
-            y: 20,
-            duration: 1,
-            delay: 1.2,
-            ease: 'power3.out'
-        });
-    }
-    
-    // Description fade in
-    const desc = document.querySelector('.hero-description');
-    if (desc) {
-        gsap.from(desc, {
-            opacity: 0,
-            y: 20,
-            duration: 1,
-            delay: 1.5,
-            ease: 'power3.out'
-        });
-    }
-    
-    // CTA buttons stagger
-    const ctas = document.querySelector('.hero-ctas');
-    if (ctas) {
-        gsap.from(ctas.children, {
-            opacity: 0,
-            y: 20,
-            duration: 0.8,
-            stagger: 0.15,
-            delay: 1.8,
-            ease: 'power3.out'
-        });
-    }
-    
-    // Stat cards stagger
-    const statCards = document.querySelectorAll('.stat-card');
-    if (statCards.length) {
-        gsap.from(statCards, {
-            opacity: 0,
-            y: 40,
-            duration: 0.8,
-            stagger: 0.2,
-            delay: 1.5,
-            ease: 'power3.out'
-        });
-    }
-})();
-
-// ============================================
-// NUMBER COUNTER ANIMATION
-// ============================================
-(function() {
-    function animateCounter(elementId, target, suffix = '') {
-        const el = document.getElementById(elementId);
-        if (!el) return;
-        
-        let current = 0;
-        const duration = 2000; // ms
-        const steps = 60;
-        const increment = target / steps;
-        const stepDuration = duration / steps;
-        
-        function update() {
-            current += increment;
-            if (current >= target) {
-                el.textContent = target + suffix;
-                return;
-            }
-            el.textContent = Math.floor(current) + suffix;
-            setTimeout(update, stepDuration);
-        }
-        
-        // Start when visible
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    update();
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.5 });
-        
-        observer.observe(el);
-    }
-    
-    animateCounter('counter1', 20, '+');
-    animateCounter('counter2', 50, '+');
-    animateCounter('counter3', 10, 'M+');
-})();
-
-// ============================================
-// MOBILE MENU & SMOOTH SCROLL (existing)
-// ============================================
-const mobileToggle = document.getElementById('mobileToggle');
-const mobileNav = document.getElementById('mobileNav');
-
-if (mobileToggle && mobileNav) {
-    mobileToggle.addEventListener('click', () => {
-        mobileNav.classList.toggle('active');
-        mobileToggle.classList.toggle('active');
-    });
-    
-    document.querySelectorAll('.mobile-nav-link').forEach(link => {
-        link.addEventListener('click', () => {
-            mobileNav.classList.remove('active');
-            mobileToggle.classList.remove('active');
-        });
-    });
-}
-
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
-});
-
-// Fade-in on scroll
-const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('fade-in');
-            observer.unobserve(entry.target);
-        }
-    });
-}, observerOptions);
-
-document.querySelectorAll('.blog-card, .video-card').forEach(el => {
-    observer.observe(el);
-});
-</script>
+<script src="main.js"></script>
 
 </body>
 </html>

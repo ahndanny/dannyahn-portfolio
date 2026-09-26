@@ -27,6 +27,13 @@
 </head>
 <body>
 
+<!-- Grain Texture Overlay -->
+<div class="grain-overlay" aria-hidden="true"></div>
+
+<!-- Custom Cursor (desktop only) -->
+<div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+<div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
+
 <!-- Navigation -->
 <nav class="nav">
     <div class="container nav-inner">
@@ -205,27 +212,9 @@
     </div>
 </footer>
 
+<script src="main.js"></script>
 <script>
-// Mobile Menu Toggle
-const mobileToggle = document.getElementById('mobileToggle');
-const mobileNav = document.getElementById('mobileNav');
-
-if (mobileToggle && mobileNav) {
-    mobileToggle.addEventListener('click', () => {
-        mobileNav.classList.toggle('active');
-        mobileToggle.classList.toggle('active');
-    });
-    
-    // Close menu when clicking a link
-    document.querySelectorAll('.mobile-nav-link').forEach(link => {
-        link.addEventListener('click', () => {
-            mobileNav.classList.remove('active');
-            mobileToggle.classList.remove('active');
-        });
-    });
-}
-
-// Video Category Filter
+// Page-specific: video category filter
 const filterBtns = document.querySelectorAll('.filter-btn');
 const videoCards = document.querySelectorAll('.video-card');
 
