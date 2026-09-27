@@ -725,8 +725,7 @@ strong, em {
 }
 
 /* Tile graphics (SVG art fills the top of a tile) */
-.tile-graphic,
-.video-thumb {
+.tile-graphic {
     width: 100%;
     border-radius: 12px;
     overflow: hidden;
@@ -734,8 +733,7 @@ strong, em {
     aspect-ratio: 16 / 10;
 }
 
-.tile-graphic svg,
-.video-thumb svg {
+.tile-graphic svg {
     width: 100%;
     height: 100%;
     display: block;
@@ -941,6 +939,15 @@ strong, em {
     width: 56px;
     height: 56px;
     border-color: rgba(59, 130, 246, 0.7);
+}
+
+/* Hide the native cursor on fine-pointer devices — the custom dot+ring replaces it */
+@media (pointer: fine) {
+    body.has-custom-cursor,
+    body.has-custom-cursor a,
+    body.has-custom-cursor button {
+        cursor: none;
+    }
 }
 
 /* Hide custom cursor on touch devices */
@@ -1200,6 +1207,73 @@ strong, em {
     width: 100%;
     height: 100%;
     border: none;
+}
+
+/* Click-to-load video thumbnail (replaces the eager iframe) */
+.video-thumb {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+}
+
+.video-thumb .thumb-play {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1.5px solid var(--accent-cyan);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s ease;
+}
+
+.video-thumb:hover .thumb-play {
+    transform: scale(1.12);
+    background: rgba(6, 182, 212, 0.15);
+}
+
+.video-thumb .thumb-play svg {
+    width: 20px;
+    height: 20px;
+    margin-left: 3px; /* optical centering of the play triangle */
+    fill: var(--accent-cyan);
+}
+
+/* "More coming" note under blog/video grids (replaces dead pagination) */
+.blog-upcoming-note {
+    display: block;
+    width: fit-content;
+    margin: 48px auto 0;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    padding: 16px 24px;
+    border: 1px dashed var(--border-color);
+    border-radius: 12px;
+}
+
+/* ============================================
+   REDUCED MOTION — kill decorative animation for users who ask for it
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .cursor-dot,
+    .cursor-ring {
+        display: none !important;
+    }
 }
 
 .video-title {
@@ -1666,4 +1740,200 @@ strong, em {
     .bento-section {
         padding: 60px 0;
     }
+}
+
+/* ============================================
+   ARTICLE PAGE (role guide / keyword landing)
+   ============================================ */
+.article-page h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 1.15;
+    margin-bottom: 24px;
+}
+
+.article-page .lead-paragraph {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 32px;
+}
+
+.article-page h2 {
+    margin-top: 48px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.article-page p {
+    color: var(--text-secondary);
+    line-height: 1.75;
+    margin-bottom: 16px;
+}
+
+.article-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.article-list li {
+    position: relative;
+    padding-left: 28px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+}
+
+.article-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 9px;
+    width: 12px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--accent-gradient);
+}
+
+/* Role comparison cards */
+.role-compare {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.compare-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 24px;
+}
+
+.compare-card h3 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.compare-card p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.compare-card.accent {
+    border-color: rgba(59, 130, 246, 0.5);
+    background: linear-gradient(160deg, rgba(59, 130, 246, 0.12), rgba(6, 182, 212, 0.08));
+}
+
+/* Article CTA */
+.article-cta {
+    margin-top: 48px;
+    padding: 32px;
+    border-radius: 16px;
+    background: linear-gradient(160deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.06));
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.article-cta h3 {
+    margin-bottom: 12px;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-ghost:hover {
+    color: #ffffff;
+    border-color: var(--accent-blue);
+    background: rgba(59, 130, 246, 0.1);
+    transform: translateY(-3px);
+}
+
+/* FAQ accordion */
+.faq-item {
+    margin-bottom: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    overflow: hidden;
+}
+
+.faq-item summary {
+    cursor: pointer;
+    padding: 18px 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+    list-style: none;
+    position: relative;
+}
+
+.faq-item summary::-webkit-details-marker {
+    display: none;
+}
+
+.faq-item summary::after {
+    content: "+";
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent-cyan, #06b6d4);
+    font-size: 1.2rem;
+}
+
+.faq-item[open] summary::after {
+    content: "–";
+}
+
+.faq-item p {
+    padding: 0 24px 20px;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .role-compare {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Featured guide banner (blog page) */
+.featured-guide {
+    display: block;
+    padding: 28px 32px;
+    margin-bottom: 40px;
+    border-radius: 16px;
+    background: linear-gradient(160deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.06));
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.featured-guide h3 {
+    margin: 12px 0;
+    font-size: 1.3rem;
+}
+
+.featured-guide h3 a {
+    color: var(--text-primary);
+    text-decoration: none;
+    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.featured-guide p {
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin: 0;
 }

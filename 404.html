@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 — Page Not Found | Danny Ahn</title>
+    <meta name="description" content="The page you were looking for could not be found on dannyahn.com.">
+    <meta name="robots" content="noindex, follow">
+
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://dannyahn.com/">
+    <meta property="og:title" content="404 — Page Not Found | Danny Ahn">
+    <meta property="og:description" content="The page you were looking for could not be found.">
+    <meta property="og:image" content="https://dannyahn.com/og-image.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
+    <meta name="theme-color" content="#0a0e17">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<!-- Grain Texture Overlay -->
+<div class="grain-overlay" aria-hidden="true"></div>
+
+<!-- Custom Cursor (desktop only) -->
+<div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+<div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
+
+<!-- Navigation -->
+<nav class="nav">
+    <div class="container nav-inner">
+        <a href="/index.html" class="logo">DA<span>.</span></a>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">
+            <span></span><span></span><span></span>
+        </button>
+
+        <!-- Desktop Nav -->
+        <ul class="nav-links desktop-nav">
+            <li><a href="/about.html" class="nav-link">About</a></li>
+            <li><a href="/blog.html" class="nav-link">Blog</a></li>
+            <li><a href="/videos.html" class="nav-link">Videos</a></li>
+        </ul>
+
+        <!-- Mobile Nav -->
+        <div class="mobile-nav" id="mobileNav">
+            <a href="/about.html" class="mobile-nav-link">About</a>
+            <a href="/blog.html" class="mobile-nav-link">Blog</a>
+            <a href="/videos.html" class="mobile-nav-link">Videos</a>
+        </div>
+    </div>
+</nav>
+
+<!-- 404 Section -->
+<section class="content-section notfound-section">
+    <div class="container section-container">
+        <p class="hero-eyebrow"><span class="terminal-prompt">~/</span>dannyahn<span class="cursor-blink">_</span><span class="eyebrow-sep">//</span> 404 not found</p>
+
+        <h1 class="notfound-code gradient-text">404</h1>
+        <p class="notfound-message">This page doesn't exist — it may have moved, or the link was off by a character.</p>
+
+        <div class="hero-ctas" style="margin-top: 32px;">
+            <a href="/index.html" class="btn btn-primary magnetic">Back Home</a>
+            <a href="/blog.html" class="btn btn-secondary magnetic">Read Blog</a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container footer-inner">
+        <p>&copy; 2026 Danny Ahn. All rights reserved.</p>
+        <div class="footer-links">
+            <a href="https://linkedin.com/in/danny-ahn" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            <a href="https://github.com/ahndanny" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </div>
+    </div>
+</footer>
+
+<script src="/main.js"></script>
+<style>
+/* 404-specific layout (kept local so style.css stays page-agnostic) */
+.notfound-section {
+    min-height: calc(100vh - 220px);
+    display: flex;
+    align-items: center;
+}
+
+.notfound-code {
+    font-size: clamp(5rem, 14vw, 9rem);
+    font-weight: 800;
+    line-height: 1;
+    margin: 24px 0 16px;
+}
+
+.notfound-message {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    max-width: 520px;
+}
+</style>
+
+</body>
+</html>

@@ -4,24 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Videos — Danny Ahn</title>
-    <meta name="description" content="Talks, tutorials, and deep dives on cybersecurity, cloud infrastructure, data systems, and enterprise architecture by Danny Ahn.">
+    <meta name="description" content="Talks, tutorials, and deep dives on artificial intelligence, cybersecurity, cloud infrastructure, data systems, and enterprise architecture by Danny Ahn.">
     
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://dannyahn.com/videos.html">
     <meta property="og:title" content="Videos — Danny Ahn">
-    <meta property="og:description" content="Talks, tutorials, and deep dives on cybersecurity, cloud infrastructure, data systems, and enterprise architecture by Danny Ahn.">
-    
+    <meta property="og:description" content="Talks, tutorials, and deep dives on artificial intelligence, cybersecurity, cloud infrastructure, data systems, and enterprise architecture by Danny Ahn.">
+    <meta property="og:image" content="https://dannyahn.com/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": "Videos — Danny Ahn",
+      "url": "https://dannyahn.com/videos.html",
+      "description": "Talks, tutorials, and deep dives on artificial intelligence, cybersecurity, cloud infrastructure, data systems, and enterprise architecture."
+    }
+    </script>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
+    <meta name="theme-color" content="#0a0e17">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
-    <!-- Favicon -->
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" style="position:absolute;z-index:-1;top:8px;left:16px">
-        <rect width="32" height="32" rx="6" fill="#0a0e17"/>
-        <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="16" fill="url(#g)">D</text>
-        <defs><linearGradient id="g" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#4f8fff"/><stop offset="100%" stop-color="#00e5ff"/></linearGradient></defs>
-    </svg>
     
     <link rel="stylesheet" href="style.css">
 </head>
@@ -72,6 +84,7 @@
         <!-- Video Category Filter -->
         <div class="video-filters">
             <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="ai">AI / ML</button>
             <button class="filter-btn" data-filter="talks">Talks</button>
             <button class="filter-btn" data-filter="tutorials">Tutorials</button>
             <button class="filter-btn" data-filter="deep-dives">Deep Dives</button>
@@ -80,97 +93,104 @@
         <!-- Video Grid -->
         <div class="video-grid">
             <!-- Video Card 1 -->
+            <article class="video-card" data-category="ai">
+                <div class="video-wrapper">
+                    <div class="video-thumb" role="button" tabindex="0" aria-label="Play: Building AI Systems That Survive Production"
+                         data-src="https://www.youtube.com/embed/VIDEO_ID_7">
+                        <span class="thumb-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+                    </div>
+                </div>
+                <h3 class="video-title">Building AI Systems That Survive Production</h3>
+                <p class="video-description">What it actually takes to move machine learning from notebook to production — evaluation, monitoring, and the infrastructure models depend on.</p>
+            </article>
+
+            <!-- Video Card 2 -->
+            <article class="video-card" data-category="ai">
+                <div class="video-wrapper">
+                    <div class="video-thumb" role="button" tabindex="0" aria-label="Play: AI-Driven Security Operations"
+                         data-src="https://www.youtube.com/embed/VIDEO_ID_8">
+                        <span class="thumb-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+                    </div>
+                </div>
+                <h3 class="video-title">AI-Driven Security Operations</h3>
+                <p class="video-description">How anomaly detection and behavioral models are turning reactive SOC workflows into proactive, self-learning defense.</p>
+            </article>
+
+            <!-- Video Card 3 -->
             <article class="video-card" data-category="talks">
                 <div class="video-wrapper">
-                    <iframe 
-                        src="https://www.youtube.com/embed/VIDEO_ID_1" 
-                        title="Video 1" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe>
+                    <div class="video-thumb" role="button" tabindex="0" aria-label="Play: The Future of Enterprise Security"
+                         data-src="https://www.youtube.com/embed/VIDEO_ID_1">
+                        <span class="thumb-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+                    </div>
                 </div>
                 <h3 class="video-title">The Future of Enterprise Security</h3>
                 <p class="video-description">A talk on emerging threats and how zero trust architecture is reshaping enterprise security from the ground up.</p>
             </article>
             
-            <!-- Video Card 2 -->
+            <!-- Video Card 4 -->
             <article class="video-card" data-category="tutorials">
                 <div class="video-wrapper">
-                    <iframe 
-                        src="https://www.youtube.com/embed/VIDEO_ID_2" 
-                        title="Video 2" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe>
+                    <div class="video-thumb" role="button" tabindex="0" aria-label="Play: Building Cloud Infrastructure from Scratch"
+                         data-src="https://www.youtube.com/embed/VIDEO_ID_2">
+                        <span class="thumb-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+                    </div>
                 </div>
                 <h3 class="video-title">Building Cloud Infrastructure from Scratch</h3>
                 <p class="video-description">A step-by-step tutorial on designing and deploying cloud-native infrastructure using AWS, Azure, or GCP.</p>
             </article>
             
-            <!-- Video Card 3 -->
+            <!-- Video Card 5 -->
             <article class="video-card" data-category="deep-dives">
                 <div class="video-wrapper">
-                    <iframe 
-                        src="https://www.youtube.com/embed/VIDEO_ID_3" 
-                        title="Video 3" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe>
+                    <div class="video-thumb" role="button" tabindex="0" aria-label="Play: Data Pipeline Architecture at Scale"
+                         data-src="https://www.youtube.com/embed/VIDEO_ID_3">
+                        <span class="thumb-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+                    </div>
                 </div>
                 <h3 class="video-title">Data Pipeline Architecture at Scale</h3>
                 <p class="video-description">A deep dive into building data pipelines that handle millions of events per second without breaking.</p>
             </article>
             
-            <!-- Video Card 4 -->
+            <!-- Video Card 6 -->
             <article class="video-card" data-category="talks">
                 <div class="video-wrapper">
-                    <iframe 
-                        src="https://www.youtube.com/embed/VIDEO_ID_4" 
-                        title="Video 4" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe>
+                    <div class="video-thumb" role="button" tabindex="0" aria-label="Play: Lessons from the Casino Industry"
+                         data-src="https://www.youtube.com/embed/VIDEO_ID_4">
+                        <span class="thumb-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+                    </div>
                 </div>
                 <h3 class="video-title">Lessons from the Casino Industry</h3>
                 <p class="video-description">How working with MGM Mirage's player club database taught me about enterprise data systems and security.</p>
             </article>
             
-            <!-- Video Card 5 -->
+            <!-- Video Card 7 -->
             <article class="video-card" data-category="tutorials">
                 <div class="video-wrapper">
-                    <iframe 
-                        src="https://www.youtube.com/embed/VIDEO_ID_5" 
-                        title="Video 5" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe>
+                    <div class="video-thumb" role="button" tabindex="0" aria-label="Play: Infrastructure as Code Best Practices"
+                         data-src="https://www.youtube.com/embed/VIDEO_ID_5">
+                        <span class="thumb-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+                    </div>
                 </div>
                 <h3 class="video-title">Infrastructure as Code Best Practices</h3>
                 <p class="video-description">Moving past simple Terraform scripts to production-grade IaC with state management and CI/CD integration.</p>
             </article>
             
-            <!-- Video Card 6 -->
+            <!-- Video Card 8 -->
             <article class="video-card" data-category="deep-dives">
                 <div class="video-wrapper">
-                    <iframe 
-                        src="https://www.youtube.com/embed/VIDEO_ID_6" 
-                        title="Video 6" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe>
+                    <div class="video-thumb" role="button" tabindex="0" aria-label="Play: Database Design for High-Concurrency Systems"
+                         data-src="https://www.youtube.com/embed/VIDEO_ID_6">
+                        <span class="thumb-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+                    </div>
                 </div>
                 <h3 class="video-title">Database Design for High-Concurrency Systems</h3>
                 <p class="video-description">Sharding, replication strategies, and consistency models for databases handling millions of concurrent connections.</p>
             </article>
         </div>
         
-        <!-- Pagination -->
-        <div class="pagination">
-            <a href="#" class="page-link active">1</a>
-            <a href="#" class="page-link">2</a>
-            <a href="#" class="page-link">3</a>
-            <span class="page-ellipsis">...</span>
-        </div>
+        <!-- Upcoming note (pagination returns once videos are published) -->
+        <p class="blog-upcoming-note">More talks on the way — check back soon.</p>
     </div>
 </section>
 
@@ -208,7 +228,7 @@
 <!-- Footer -->
 <footer class="footer">
     <div class="container footer-inner">
-        <p>&copy; 2025 Danny Ahn. All rights reserved.</p>
+        <p>&copy; 2026 Danny Ahn. All rights reserved.</p>
     </div>
 </footer>
 

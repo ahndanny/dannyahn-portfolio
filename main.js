@@ -9,6 +9,8 @@
 (function initParticles() {
     const canvas = document.getElementById('particle-canvas');
     if (!canvas || typeof THREE === 'undefined') return;
+    // Respect reduced-motion: keep the hero static for those users
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -152,6 +154,9 @@
     const nameEl = document.getElementById('nameText');
     if (!nameEl || typeof gsap === 'undefined') return;
 
+    // Reduced motion: show the name immediately, no per-letter animation
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     // Split into individual characters
     const text = nameEl.textContent;
     nameEl.innerHTML = '';
@@ -188,6 +193,12 @@
         }
     }, 2500);
 
+    if (reducedMotion) {
+        // No staggered animation — reveal instantly, keep everything else static
+        letters.forEach(l => { l.style.opacity = '1'; l.style.transform = 'none'; });
+        return;
+    }
+
     gsap.to(letters, {
         opacity: 1, y: 0, rotateX: 0,
         duration: 0.8, stagger: 0.05,
@@ -220,6 +231,10 @@
     function animateCounter(elementId, target, suffix = '') {
         const el = document.getElementById(elementId);
         if (!el) return;
+
+        // HTML already contains the final value (good for crawlers & no-JS).
+        // Only animate from 0 when motion is welcome.
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
         let current = 0;
         const duration = 2000;
@@ -258,6 +273,7 @@
 // ============================================
 (function initMagnetic() {
     if (window.matchMedia('(pointer: coarse)').matches) return; // touch devices skip
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     document.querySelectorAll('.magnetic').forEach(btn => {
         btn.addEventListener('mousemove', (e) => {
@@ -302,6 +318,9 @@
     const ring = document.getElementById('cursorRing');
     if (!dot || !ring) return;
     if (window.matchMedia('(pointer: coarse)').matches) return; // touch devices skip
+
+    // Signal to CSS that the custom cursor is live so the native one can hide
+    document.body.classList.add('has-custom-cursor');
 
     let mx = 0, my = 0, rx = 0, ry = 0;
 
@@ -379,6 +398,36 @@
     }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
 
     targets.forEach(el => observer.observe(el));
+})();
+
+// ============================================
+// CLICK-TO-LOAD VIDEO EMBEDS (videos page)
+// Thumbnails render instantly; the iframe only loads on click,
+// so 6 YouTube embeds never block first paint.
+// ============================================
+(function initVideoThumbs() {
+    document.querySelectorAll('.video-thumb').forEach(thumb => {
+        const load = () => {
+            const src = thumb.dataset.src;
+            if (!src) return;
+            const iframe = document.createElement('iframe');
+            iframe.src = src;
+            iframe.title = thumb.closest('.video-card')?.querySelector('.video-title')?.textContent || 'Video';
+            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+            iframe.setAttribute('allowfullscreen', '');
+            const wrapper = thumb.parentElement; // .video-wrapper
+            wrapper.appendChild(iframe);
+            thumb.remove();
+        };
+        thumb.addEventListener('click', load);
+        // Keyboard access (thumb has role="button" tabindex="0")
+        thumb.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                load();
+            }
+        });
+    });
 })();
 
 // ============================================

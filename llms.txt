@@ -1,0 +1,31 @@
+# Danny Ahn — dannyahn.com
+
+Danny Ahn is an AI-focused technology & data systems professional with 20+ years of experience across artificial intelligence, cybersecurity, cloud infrastructure, and enterprise architecture. He builds intelligent, secure, scalable systems for organizations from Fortune 500 companies to emerging startups.
+
+## Core Expertise
+- Artificial Intelligence: machine learning systems, intelligent data pipelines, AI-driven security — turning models into production infrastructure
+- Cybersecurity: threat analysis, vulnerability assessment, zero trust architecture, enterprise security for Fortune 500 companies
+- Cloud Infrastructure: AWS, Azure, GCP; cloud-native design and deployment at scale
+- Data Systems: pipeline architecture handling millions of events per second, database design for high-concurrency workloads (sharding, replication, consistency models)
+- Enterprise Architecture: system integration, API design, microservices, technology stack optimization
+- DevOps & Automation: production-grade Terraform/IaC, state management, CI/CD integration
+
+## Career Highlights
+- 2012 — Analyzed MGM Mirage's casino player club database and loyalty program infrastructure; identified vulnerabilities in enterprise data systems
+- 2015+ — Enterprise cybersecurity with Fortune 500 companies: threat analysis and security architecture
+- 2018+ — Cloud & infrastructure leadership for mid-market organizations
+- 2021+ — AI-focused practice: applying machine learning to enterprise security, cloud infrastructure, and data systems
+
+## Pages
+- [About](https://dannyahn.com/about.html) — full background, career timeline, expertise detail
+- [Blog](https://dannyahn.com/blog.html) — articles on AI/ML, cybersecurity, cloud, and data systems (new posts in progress)
+- [Videos](https://dannyahn.com/videos.html) — talks, tutorials, and deep dives
+- [What Is an AI Data Systems Architect?](https://dannyahn.com/ai-data-systems-architect.html) — definitive role guide: definition, skills, how it differs from data & ML engineering, career path
+
+## Featured Guide
+"What is an AI data systems architect?" — the full answer lives at https://dannyahn.com/ai-data-systems-architect.html. An AI data systems architect designs and oversees the end-to-end infrastructure that lets artificial intelligence run in production: machine learning pipelines, model serving platforms, real-time data foundations, cloud architecture, and the security controls that tie them together.
+
+## Contact
+Email: danny@dannyahn.com
+LinkedIn: https://linkedin.com/in/danny-ahn
+GitHub: https://github.com/ahndanny

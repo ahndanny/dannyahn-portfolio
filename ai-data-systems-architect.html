@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Is an AI Data Systems Architect? Role, Skills &amp; Career Path — Danny Ahn</title>
+    <meta name="description" content="An AI data systems architect designs the intelligent infrastructure behind modern organizations: machine learning pipelines, real-time data platforms, and secure cloud architecture. What the role is, what it takes, and how to become one.">
+
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://dannyahn.com/ai-data-systems-architect.html">
+    <meta property="og:title" content="What Is an AI Data Systems Architect? Role, Skills & Career Path">
+    <meta property="og:description" content="The definitive guide to the AI data systems architect role: what it is, core skills, how it differs from a data or ML engineer, and how to build a career in it.">
+    <meta property="og:image" content="https://dannyahn.com/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "What Is an AI Data Systems Architect? Role, Skills & Career Path",
+      "description": "An AI data systems architect designs the intelligent infrastructure behind modern organizations: machine learning pipelines, real-time data platforms, and secure cloud architecture.",
+      "url": "https://dannyahn.com/ai-data-systems-architect.html",
+      "author": {
+        "@type": "Person",
+        "name": "Danny Ahn",
+        "jobTitle": "AI & Data Systems Professional"
+      },
+      "mainEntityOfPage": "https://dannyahn.com/ai-data-systems-architect.html"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is an AI data systems architect?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "An AI data systems architect is the professional who designs and oversees the end-to-end infrastructure that lets artificial intelligence run in production: data pipelines, model serving platforms, real-time analytics, cloud architecture, and the security controls that tie them together. They sit at the intersection of machine learning engineering, data engineering, and enterprise architecture."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is an AI data systems architect different from a data engineer?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A data engineer builds and maintains pipelines that move and store data. An AI data systems architect owns the broader design: which platforms to use, how models are trained and served at scale, how real-time and batch workloads coexist, and how the whole system stays secure and cost-efficient as it grows."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is an AI data systems architect different from a machine learning engineer?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A machine learning engineer focuses on building and tuning models. An AI data systems architect focuses on the systems those models run on — feature stores, inference infrastructure, observability, and the data foundations that make models reliable in production."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What skills does an AI data systems architect need?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Core skills include machine learning fundamentals, data pipeline design (batch and streaming), cloud architecture (AWS, Azure, GCP), database and storage design for high-concurrency workloads, infrastructure as code, and cybersecurity — especially zero trust principles applied to AI systems."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you become an AI data systems architect?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Most architects come from 5–10 years in one of three tracks: data engineering, machine learning engineering, or enterprise/cloud architecture. The role crystallizes when you start owning cross-team design decisions — choosing platforms, defining standards, and making sure AI systems scale without breaking security or budget."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
+    <meta name="theme-color" content="#0a0e17">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Grain Texture Overlay -->
+<div class="grain-overlay" aria-hidden="true"></div>
+
+<!-- Custom Cursor (desktop only) -->
+<div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+<div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
+
+<!-- Navigation -->
+<nav class="nav">
+    <div class="container nav-inner">
+        <a href="index.html" class="logo">DA<span>.</span></a>
+        <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">
+            <span></span><span></span><span></span>
+        </button>
+        <ul class="nav-links desktop-nav">
+            <li><a href="about.html" class="nav-link">About</a></li>
+            <li><a href="blog.html" class="nav-link">Blog</a></li>
+            <li><a href="videos.html" class="nav-link">Videos</a></li>
+        </ul>
+        <div class="mobile-nav" id="mobileNav">
+            <a href="about.html" class="mobile-nav-link">About</a>
+            <a href="blog.html" class="mobile-nav-link">Blog</a>
+            <a href="videos.html" class="mobile-nav-link">Videos</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Article -->
+<main class="content-section article-page">
+    <div class="container section-container narrow">
+        <span class="tile-tag reveal-on-scroll">Role Guide · AI / ML</span>
+        <h1 class="reveal-on-scroll">What Is an <span class="gradient-text">AI Data Systems Architect</span>?</h1>
+
+        <p class="lead-paragraph reveal-on-scroll">
+            An <strong>AI data systems architect</strong> is the professional who designs and oversees the
+            end-to-end infrastructure that lets artificial intelligence actually run in production. Not just
+            models — the pipelines, platforms, cloud architecture, and security controls that make those
+            models reliable, fast, and safe at scale. It's one of the fastest-growing roles in technology,
+            because every organization adopting AI eventually hits the same wall: <em>the model works in a
+            notebook; now make it an infrastructure.</em>
+        </p>
+
+        <h2 class="reveal-on-scroll">What does an AI data systems architect do?</h2>
+        <p class="reveal-on-scroll">
+            The role sits at the intersection of three disciplines — machine learning engineering, data
+            engineering, and enterprise architecture. In practice, that means owning decisions like:
+        </p>
+        <ul class="article-list reveal-on-scroll">
+            <li><strong>Data foundations</strong> — designing pipelines (batch and streaming) that feed models with clean, timely, trustworthy data.</li>
+            <li><strong>Model serving platforms</strong> — choosing how trained models get deployed: inference services, feature stores, GPU capacity planning, latency budgets.</li>
+            <li><strong>Cloud architecture for AI workloads</strong> — structuring AWS/Azure/GCP environments so training and inference stay cost-efficient as usage grows.</li>
+            <li><strong>Security by design</strong> — applying zero trust principles to data pipelines, model endpoints, and the sensitive data that flows through them.</li>
+            <li><strong>Standards &amp; scale</strong> — defining patterns teams follow so the 10th AI system is as clean as the first.</li>
+        </ul>
+
+        <h2 class="reveal-on-scroll">How it differs from related roles</h2>
+        <div class="role-compare reveal-on-scroll">
+            <div class="compare-card">
+                <h3>Data Engineer</h3>
+                <p>Builds and maintains the pipelines that move and store data. Works inside a given architecture.</p>
+            </div>
+            <div class="compare-card">
+                <h3>Machine Learning Engineer</h3>
+                <p>Focuses on building, tuning, and shipping models themselves — the intelligence layer.</p>
+            </div>
+            <div class="compare-card accent">
+                <h3>AI Data Systems Architect</h3>
+                <p>Owns the design of everything those roles run on: platforms, standards, security, cost, and scale. The connective tissue between ML, data, cloud, and security.</p>
+            </div>
+        </div>
+
+        <h2 class="reveal-on-scroll">Core skills</h2>
+        <ul class="article-list reveal-on-scroll">
+            <li><strong>Machine learning fundamentals</strong> — enough depth to design systems around real model behavior, not abstractions.</li>
+            <li><strong>Data pipeline design</strong> — batch and streaming architectures, data quality, schema evolution.</li>
+            <li><strong>Cloud architecture</strong> — AWS, Azure, or GCP at production scale; IaC (Terraform) as the default way of working.</li>
+            <li><strong>Database &amp; storage design</strong> — sharding, replication, consistency models for high-concurrency workloads.</li>
+            <li><strong>Cybersecurity</strong> — threat modeling and zero trust applied to AI systems: who can touch the data, the model, and the endpoints.</li>
+        </ul>
+
+        <h2 class="reveal-on-scroll">How do you become one?</h2>
+        <p class="reveal-on-scroll">
+            Most architects arrive from 5–10 years in one of three tracks: data engineering, machine learning
+            engineering, or enterprise/cloud architecture. The role crystallizes when you stop building inside
+            someone else's design and start owning cross-team decisions — choosing platforms, defining standards,
+            and making sure AI systems scale without breaking security or budget. There is no single certification;
+            the signal is a portfolio of systems that stayed up as they grew.
+        </p>
+
+        <div class="article-cta reveal-on-scroll">
+            <h3>Want to see this role in practice?</h3>
+            <p>I've spent 20+ years building exactly these kinds of systems — from enterprise security data platforms to AI-driven infrastructure. Explore the work, or get in touch.</p>
+            <div class="cta-buttons">
+                <a href="about.html" class="btn btn-primary">About Me</a>
+                <a href="blog.html" class="btn btn-ghost">Read the Blog</a>
+            </div>
+        </div>
+
+        <!-- FAQ (matches JSON-LD) -->
+        <h2 class="reveal-on-scroll">Frequently asked questions</h2>
+        <details class="faq-item reveal-on-scroll">
+            <summary>What is an AI data systems architect?</summary>
+            <p>The professional who designs and oversees the end-to-end infrastructure that lets artificial intelligence run in production: data pipelines, model serving platforms, real-time analytics, cloud architecture, and the security controls that tie them together. They sit at the intersection of machine learning engineering, data engineering, and enterprise architecture.</p>
+        </details>
+        <details class="faq-item reveal-on-scroll">
+            <summary>How is an AI data systems architect different from a data engineer?</summary>
+            <p>A data engineer builds and maintains pipelines that move and store data. An AI data systems architect owns the broader design: which platforms to use, how models are trained and served at scale, how real-time and batch workloads coexist, and how the whole system stays secure and cost-efficient as it grows.</p>
+        </details>
+        <details class="faq-item reveal-on-scroll">
+            <summary>How is an AI data systems architect different from a machine learning engineer?</summary>
+            <p>A machine learning engineer focuses on building and tuning models. An AI data systems architect focuses on the systems those models run on — feature stores, inference infrastructure, observability, and the data foundations that make models reliable in production.</p>
+        </details>
+        <details class="faq-item reveal-on-scroll">
+            <summary>What skills does an AI data systems architect need?</summary>
+            <p>Core skills include machine learning fundamentals, data pipeline design (batch and streaming), cloud architecture (AWS, Azure, GCP), database and storage design for high-concurrency workloads, infrastructure as code, and cybersecurity — especially zero trust principles applied to AI systems.</p>
+        </details>
+        <details class="faq-item reveal-on-scroll">
+            <summary>How do you become an AI data systems architect?</summary>
+            <p>Most architects come from 5–10 years in one of three tracks: data engineering, machine learning engineering, or enterprise/cloud architecture. The role crystallizes when you start owning cross-team design decisions — choosing platforms, defining standards, and making sure AI systems scale without breaking security or budget.</p>
+        </details>
+    </div>
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container footer-inner">
+        <p>&copy; 2026 Danny Ahn. All rights reserved.</p>
+    </div>
+</footer>
+
+<script src="main.js"></script>
+</body>
+</html>

@@ -4,24 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About — Danny Ahn</title>
-    <meta name="description" content="About Danny Ahn — technology and data systems professional with 20+ years in cybersecurity, cloud infrastructure, and enterprise architecture.">
+    <meta name="description" content="About Danny Ahn — AI-focused technology and data systems professional with 20+ years in artificial intelligence, cybersecurity, cloud infrastructure, and enterprise architecture.">
     
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://dannyahn.com/about.html">
     <meta property="og:title" content="About Danny Ahn">
-    <meta property="og:description" content="Technology and data systems professional with deep expertise in cybersecurity, cloud infrastructure, and enterprise architecture.">
-    
-    <!-- Fonts -->
+    <meta property="og:description" content="AI-focused technology & data systems professional with 20+ years of expertise across artificial intelligence, cybersecurity, cloud infrastructure, and enterprise architecture.">
+    <meta property="og:image" content="https://dannyahn.com/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AboutPage",
+      "name": "About Danny Ahn",
+      "url": "https://dannyahn.com/about.html",
+      "mainEntity": {
+        "@type": "Person",
+        "name": "Danny Ahn",
+        "jobTitle": "AI & Data Systems Professional",
+        "sameAs": [
+          "https://linkedin.com/in/danny-ahn",
+          "https://github.com/ahndanny"
+        ]
+      }
+    }
+    </script>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
+    <meta name="theme-color" content="#0a0e17">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
-    <!-- Favicon -->
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" style="position:absolute;z-index:-1;top:8px;left:16px">
-        <rect width="32" height="32" rx="6" fill="#0a0e17"/>
-        <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="16" fill="url(#g)">D</text>
-        <defs><linearGradient id="g" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="#4f8fff"/><stop offset="100%" stop-color="#00e5ff"/></linearGradient></defs>
-    </svg>
     
     <link rel="stylesheet" href="style.css">
 </head>
@@ -68,13 +87,21 @@
         <div class="about-grid">
             <div class="about-text">
                 <p class="lead-paragraph">
-                    I'm a technology and data systems professional with over 20 years of experience 
-                    in cybersecurity, cloud infrastructure, and enterprise architecture. My work spans 
-                    from Fortune 500 companies to emerging startups, always focused on building systems 
+                    I'm an AI-focused technology and data systems professional with over 20 years of experience 
+                    in artificial intelligence, cybersecurity, cloud infrastructure, and enterprise architecture. My work spans 
+                    from Fortune 500 companies to emerging startups, always focused on building intelligent systems 
                     that are secure, scalable, and purposeful.
                 </p>
                 
                 <div class="about-highlights">
+                    <div class="highlight-item">
+                        <span class="highlight-icon">🤖</span>
+                        <div>
+                            <h4>Artificial Intelligence</h4>
+                            <p>Applying machine learning and AI to real enterprise problems — from intelligent data systems to security that learns.</p>
+                        </div>
+                    </div>
+                    
                     <div class="highlight-item">
                         <span class="highlight-icon">🔒</span>
                         <div>
@@ -159,8 +186,8 @@
                 
                 <div class="timeline-item">
                     <span class="timeline-date gradient-text">2021+</span>
-                    <h4>Current Focus</h4>
-                    <p>Combining cybersecurity expertise with cloud architecture to help organizations build resilient, future-proof systems.</p>
+                    <h4>AI &amp; Intelligent Systems</h4>
+                    <p>Leading AI-focused work — applying machine learning to enterprise security, cloud infrastructure, and data systems so organizations build intelligent, future-proof platforms. <a href="ai-data-systems-architect.html">What is an AI data systems architect? →</a></p>
                 </div>
             </div>
         </div>
@@ -173,10 +200,16 @@
         <h2>Expertise</h2>
         
         <p style="color: var(--text-secondary); font-size: 1.05rem; max-width: 680px; margin: 0 auto 32px;">
-            Core competencies built over two decades of working across industries and scales.
+            Core competencies built over two decades of working across industries and scales — now focused on where AI meets enterprise systems.
         </p>
         
         <div class="expertise-grid">
+            <div class="expertise-card">
+                <span class="expertise-icon">🤖</span>
+                <h4>Artificial Intelligence</h4>
+                <p>Machine learning systems, intelligent data pipelines, and AI-driven security — turning models into production infrastructure that delivers.</p>
+            </div>
+            
             <div class="expertise-card">
                 <span class="expertise-icon">🔐</span>
                 <h4>Cybersecurity</h4>
@@ -250,7 +283,7 @@
 <!-- Footer -->
 <footer class="footer">
     <div class="container footer-inner">
-        <p>&copy; 2025 Danny Ahn. All rights reserved.</p>
+        <p>&copy; 2026 Danny Ahn. All rights reserved.</p>
     </div>
 </footer>
 
