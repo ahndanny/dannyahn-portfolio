@@ -1,16 +1,17 @@
 # Danny Ahn — dannyahn.com
 
-Danny Ahn is an AI data systems architect based in Las Vegas / Henderson, Nevada — with 20+ years of experience across artificial intelligence, cybersecurity, cloud infrastructure, and enterprise architecture. He builds intelligent, secure, scalable systems for organizations from Fortune 500 companies to emerging startups.
+Danny Ahn is an AI data systems architect based in Las Vegas / Henderson, Nevada — with 20+ years across MIS and IT: computer software & hardware repair, and managing software systems for education, real estate, and small business. He builds intelligent, secure, scalable AI infrastructure on top of that foundation.
 
 ## Core Expertise
-- Artificial Intelligence: machine learning systems, intelligent data pipelines, AI-driven security — turning models into production infrastructure
-- Cybersecurity: threat analysis, vulnerability assessment, zero trust architecture, enterprise security for Fortune 500 companies
-- Cloud Infrastructure: AWS, Azure, GCP; cloud-native design and deployment at scale
-- Data Systems: pipeline architecture handling millions of events per second, database design for high-concurrency workloads (sharding, replication, consistency models)
-- Enterprise Architecture: system integration, API design, microservices, technology stack optimization
+- Artificial Intelligence: machine learning systems, intelligent data pipelines, AI-driven security — turning models into production infrastructure (currently running Qwen 3.6 35B A3B at 256k context on a quad RTX 3060 build)
+- MIS & IT: computer software and hardware repair; managing software systems for education, real estate, and small business
+- Cybersecurity: threat analysis, vulnerability assessment, zero trust architecture
+- Cloud Infrastructure: cloud-native design and deployment at scale
+- Data Systems: pipeline architecture, database design for high-concurrency workloads (sharding, replication, consistency models)
 - DevOps & Automation: production-grade Terraform/IaC, state management, CI/CD integration
 
 ## Career Highlights
+- Pre-2012 — Two decades of hands-on MIS and IT: software & hardware repair; managing software systems for education, real estate, and small business
 - 2012 — Analyzed MGM Mirage's casino player club database and loyalty program infrastructure; identified vulnerabilities in enterprise data systems
 - 2015+ — Enterprise cybersecurity with Fortune 500 companies: threat analysis and security architecture
 - 2018+ — Cloud & infrastructure leadership for mid-market organizations
