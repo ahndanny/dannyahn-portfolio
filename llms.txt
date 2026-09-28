@@ -1,6 +1,6 @@
 # Danny Ahn — dannyahn.com
 
-Danny Ahn is an AI-focused technology & data systems professional with 20+ years of experience across artificial intelligence, cybersecurity, cloud infrastructure, and enterprise architecture. He builds intelligent, secure, scalable systems for organizations from Fortune 500 companies to emerging startups.
+Danny Ahn is an AI data systems architect based in Las Vegas / Henderson, Nevada — with 20+ years of experience across artificial intelligence, cybersecurity, cloud infrastructure, and enterprise architecture. He builds intelligent, secure, scalable systems for organizations from Fortune 500 companies to emerging startups.
 
 ## Core Expertise
 - Artificial Intelligence: machine learning systems, intelligent data pipelines, AI-driven security — turning models into production infrastructure
