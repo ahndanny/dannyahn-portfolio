@@ -13,8 +13,8 @@ Danny Ahn is an AI data systems architect based in Las Vegas / Henderson, Nevada
 ## Career Highlights
 - Pre-2012 — Two decades of hands-on MIS and IT: software & hardware repair; managing software systems for education, real estate, and small business
 - 2012 — Analyzed MGM Mirage's casino player club database and loyalty program infrastructure; identified vulnerabilities in enterprise data systems
-- 2015+ — Enterprise cybersecurity with Fortune 500 companies: threat analysis and security architecture
-- 2018+ — Cloud & infrastructure leadership for mid-market organizations
+- 2015+ — Hardware & software implementation: deploying and maintaining complete systems end-to-end
+- 2018+ — Growing the practice: designing, deploying, and supporting full systems for clients across education and business
 - 2021+ — AI-focused practice: applying machine learning to enterprise security, cloud infrastructure, and data systems
 
 ## Pages
