@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Portiva — Creative Agency</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html, body { font-family: 'Inter', sans-serif; }
+  .hero-word { display: inline-block; opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+  .hero-word.shown { opacity: 1; transform: translateY(0); }
+  .fade-item { opacity: 0; transform: translateY(16px); transition: opacity .8s ease, transform .8s ease; }
+  .fade-item.shown { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body class="bg-black text-white antialiased">
+
+<!-- Background video -->
+<video class="fixed inset-0 -z-10 h-full w-full object-cover" autoplay loop muted playsinline>
+  <source src="https://cdn.sceneai.art/Hero%20section%20video%20file%20(2)/13c2a27f-30ac-44f1-866d-94fca9c614d7.mp4" type="video/mp4" />
+</video>
+
+<div class="min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header id="site-header" class="fade-item w-full px-6 md:px-12 py-6 flex items-center justify-between">
+    <a href="#" class="text-2xl font-medium text-white select-none">Portiva</a>
+    <nav class="hidden md:flex items-center gap-8 text-sm text-white">
+      <a href="#" class="hover:opacity-70 transition-opacity">About</a>
+      <a href="#" class="hover:opacity-70 transition-opacity">Brands</a>
+      <a href="#" class="hover:opacity-70 transition-opacity">Careers</a>
+      <a href="#" class="hover:opacity-70 transition-opacity">Partners</a>
+    </nav>
+    <a href="#" class="rounded-full bg-white text-black text-sm font-medium px-5 py-2.5 hover:bg-gray-200 transition-colors">Chat with us</a>
+  </header>
+
+  <!-- Hero -->
+  <main class="flex-1 flex items-center px-6 md:px-12 pb-16">
+    <div class="max-w-3xl">
+      <p id="top-label" class="fade-item text-sm text-white mb-5">| Creative Agency</p>
+
+      <h1 id="hero-heading" class="text-[40px] md:text-[62px] leading-tight font-medium text-white whitespace-pre-line"></h1>
+
+      <div id="social-proof" class="fade-item mt-8 flex items-center gap-3">
+        <span class="flex items-center gap-1">
+          <!-- 5 stars, #c25e2e -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#c25e2e"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#c25e2e"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#c25e2e"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#c25e2e"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#c25e2e"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </span>
+        <span class="text-sm text-white">3000+ Customers</span>
+      </div>
+
+      <div id="cta-row" class="fade-item mt-8 flex items-center gap-4">
+        <a href="#" class="inline-flex items-center gap-2 rounded-full bg-white text-black text-sm font-medium pl-5 pr-1.5 py-1.5 hover:bg-gray-200 transition-colors">
+          Chat With Us
+          <span class="flex h-7 w-7 items-center justify-center rounded-full bg-black text-white">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
+        </a>
+        <a href="#" class="rounded-full border border-white/30 bg-white/5 backdrop-blur-sm text-white text-sm font-medium px-6 py-2.5 hover:bg-white/10 transition-colors">Our Works</a>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+(function () {
+  var lines = [
+    "Less complexity,",
+    "more impact in",
+    "every project."
+  ];
+  var heading = document.getElementById("hero-heading");
+  var words = [];
+  lines.forEach(function (line, li) {
+    line.split(" ").forEach(function (w, wi) {
+      var span = document.createElement("span");
+      span.className = "hero-word";
+      span.textContent = w;
+      heading.appendChild(span);
+      if (wi < line.split(" ").length - 1) heading.appendChild(document.createTextNode(" "));
+      words.push(span);
+    });
+    if (li < lines.length - 1) heading.appendChild(document.createElement("br"));
+  });
+
+  var header = document.getElementById("site-header");
+  var label = document.getElementById("top-label");
+  var proof = document.getElementById("social-proof");
+  var cta = document.getElementById("cta-row");
+
+  function show(el, delay) { setTimeout(function () { el.classList.add("shown"); }, delay); }
+
+  // Staggered word reveal: 120ms between words
+  words.forEach(function (w, i) { show(w, 300 + i * 120); });
+
+  // Header / label / stars / buttons fade in slightly after text begins
+  var base = 500;
+  [header, label, proof, cta].forEach(function (el, i) { show(el, base + i * 150); });
+})();
+</script>
+
+</body>
+</html>
