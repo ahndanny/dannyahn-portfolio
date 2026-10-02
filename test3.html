@@ -17,8 +17,8 @@
   .monitor-wrap { position: relative; width: min(96vw, calc(96vh * 1.777)); aspect-ratio: 16/9; }
   .monitor-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: brightness(.55) saturate(1.1); transition: filter .8s ease; }
 
-  /* Screen overlay — tuned to the monitor's active area (tweak here) */
-  #screen { position: absolute; left: 6.4%; top: 7.2%; width: 87.2%; height: 79.5%; background: #01030a; overflow: hidden; border-radius: 2px; }
+  /* Screen overlay — tuned to the monitor's active area (tuned here) */
+  #screen { position: absolute; left: 11.8%; top: 8.6%; width: 76.4%; height: 69.2%; background: #01030a; overflow: hidden; border-radius: 2px; }
 
   /* ── Power button hotspot (bottom-right of bezel) ─── */
   #power-btn { position: absolute; right: 4.6%; bottom: 9.5%; width: 7%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; z-index: 30; display: flex; align-items: center; justify-content: center; transition: transform .2s ease, box-shadow .2s ease; }
@@ -33,14 +33,11 @@
   .crt-vignette { position: absolute; inset: 0; pointer-events: none; z-index: 41; box-shadow: inset 0 0 6vmin rgba(0,0,0,.85), inset 0 0 2.5vmin rgba(34,90,170,.25); border-radius: 2px; }
   .crt-glow { position: absolute; inset: -4%; pointer-events: none; z-index: 39; background: radial-gradient(ellipse at center, rgba(80,160,255,.10) 0%, transparent 70%); opacity: 0; transition: opacity .8s ease; }
 
-  /* ── Power-on sequence ───────────────────────────── */
+  /* ── Power-on sequence (smooth ramp, no glitch) ───── */
   body.on .monitor-img { filter: brightness(1.05) saturate(1.15); }
   body.on .crt-glow { opacity: 1; }
-  @keyframes crt-flicker {
-    0% { opacity: 0; } 8% { opacity: .9; } 14% { opacity: .25; } 22% { opacity: 1; }
-    30% { opacity: .6; } 42% { opacity: 1; } 55% { opacity: .8; } 70% { opacity: 1; } 100% { opacity: 1; }
-  }
-  body.on #screen { animation: crt-flicker 1.1s ease-out both; }
+  @keyframes screen-ramp { from { opacity: 0; } to { opacity: 1; } }
+  body.on #screen { animation: screen-ramp 1s ease-out both; }
 
   /* ── Boot screen (DOM mimic of the loading video) ─── */
   #boot { position: absolute; inset: 0; z-index: 20; background: #04070f; display: none; flex-direction: column; align-items: center; justify-content: center; color: #9fd8ff; }
@@ -62,6 +59,9 @@
   .ahn-logo { position: relative; z-index: 2; font-size: clamp(28px, 7.5vmin, 96px); letter-spacing: .18em; color: #cfeeff; text-shadow: 0 0 14px rgba(90,180,255,.95), 0 0 42px rgba(60,140,255,.55); }
   .ahn-logo b { font-weight: normal; color: #fff; text-shadow: 0 0 10px #bfe3ff, 0 0 30px #4aa8ff; }
   body.ready #emblem { opacity: .28; filter: saturate(.4); }
+
+  /* brand line (ADVANCED HUMAN NETWORKS) */
+  #boot-brandline { margin-bottom: 1.6vmin; font-size: clamp(9px, 1.7vmin, 15px); letter-spacing: .5em; color: rgba(140,205,255,.85); text-shadow: 0 0 10px rgba(90,180,255,.6); z-index: 3; }
 
   /* side micro-text */
   .side-col { position: absolute; top: 50%; transform: translateY(-50%); writing-mode: vertical-rl; font-size: clamp(7px, 1.3vmin, 12px); letter-spacing: .45em; color: rgba(120,180,240,.5); z-index: 2; }
@@ -119,7 +119,7 @@
   #loc { font-size: clamp(8px, 1.4vmin, 13px); letter-spacing: .25em; color: rgba(130,190,240,.6); white-space: nowrap; }
 
   /* dashboard body */
-  #dash-body { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: auto 1fr auto; gap: 1.4vmin; padding: 1.6vmin 2.4vmin calc(2.2vmin + 9.5vmin); min-height: 0; }
+  #dash-body { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: auto 1fr auto; gap: 1.2vmin; padding: 1.4vmin 2.2vmin calc(2.2vmin + 13vmin); min-height: 0; }
   .panel { border: 1px solid rgba(80,170,255,.22); background: linear-gradient(160deg, rgba(14,30,60,.5), rgba(6,12,28,.5)); padding: 1.4vmin; position: relative; min-height: 0; overflow: hidden; }
   .panel::before { content: ''; position: absolute; top: 0; left: 0; width: 30%; height: 1px; background: linear-gradient(90deg, #4fb8ff, transparent); }
   .panel h2 { font-size: clamp(8px, 1.4vmin, 13px); letter-spacing: .3em; color: rgba(140,200,255,.7); margin-bottom: 1.2vmin; display: flex; justify-content: space-between; }
@@ -203,6 +203,9 @@
         <div class="side-col left">INTELLIGENCE&nbsp;&nbsp;SYSTEMS&nbsp;&nbsp;PEOPLE&nbsp;&nbsp;KNOWLEDGE&nbsp;&nbsp;NETWORKS</div>
         <div class="side-col right">ADVANCED&nbsp;&nbsp;HUMAN&nbsp;&nbsp;NETWORKS</div>
 
+        <!-- brand line under emblem -->
+        <div id="boot-brandline">ADVANCED HUMAN NETWORKS</div>
+
         <!-- emblem: wireframe globe + AHN -->
         <div id="emblem">
           <svg class="globe" viewBox="0 0 200 200" fill="none" stroke="#3f9dff" stroke-width="1">
@@ -248,13 +251,11 @@
         <div id="topbar">
           <div class="brand">AHN<small>v7.4.2</small></div>
           <div id="tabs">
-            <button class="tab active" data-tab="home">HOME</button>
-            <button class="tab" data-tab="system">SYSTEM</button>
-            <button class="tab" data-tab="network">NETWORK</button>
-            <button class="tab" data-tab="security">SECURITY</button>
-            <button class="tab" data-tab="archive">ARCHIVE</button>
-            <button class="tab" data-tab="tools">TOOLS</button>
-            <button class="tab" data-tab="intel">INTEL</button>
+            <a class="tab active" href="/">HOME</a>
+            <a class="tab" href="/blog.html">BLOG</a>
+            <a class="tab" href="/videos.html">VIDEOS</a>
+            <a class="tab" href="/about.html">ABOUT</a>
+            <a class="tab" href="/contact.html">CONTACT</a>
           </div>
           <div class="spacer"></div>
           <div id="loc">LAS VEGAS // NIGHT</div>
