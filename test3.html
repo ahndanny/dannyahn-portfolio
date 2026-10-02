@@ -238,6 +238,10 @@
     .dock-icon { width: 34px; height: 34px; }
     .dock-label { font-size: 9px; letter-spacing: .12em; }
 
+    /* power button — bigger tap target + brighter on phone */
+    #power-btn { width: 12%; right: 6%; bottom: 8.5%; }
+    #power-btn::before { inset: 14%; background: rgba(96,165,250,.22); border-color: rgba(96,165,250,.55); }
+
     /* boot screen stays in the monitor but scales up a touch */
     #boot-brandline { margin-bottom: 8px; font-size: 10px; letter-spacing: .35em; }
     #emblem { width: 46%; }
