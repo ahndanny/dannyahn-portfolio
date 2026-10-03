@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Apocalypse Deactivated — Gamegram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; background:#0b1020; overflow:hidden; font-family:'VT323',monospace; color:#d7ffe8; -webkit-tap-highlight-color:transparent; }
+
+  /* ============ GIFT PAGE ============ */
+  #gift { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px; background:#0b1020; z-index:50; }
+  #gift h1 { font-size:clamp(22px,4.5vw,34px); letter-spacing:.08em; color:#eaf6ff; text-shadow:0 0 12px rgba(90,170,255,.35); }
+  #gift .sub { font-size:clamp(14px,2.6vw,18px); color:#7f93b8; letter-spacing:.1em; }
+  #present { position:relative; width:150px; height:150px; animation:bob 2.4s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+  #present .box { position:absolute; left:15px; right:15px; bottom:0; height:86px; background:#c23b4e; border:3px solid #7d1f2e; box-shadow:inset -14px 0 0 rgba(0,0,0,.18); }
+  #present .ribbon-v { position:absolute; left:50%; top:0; bottom:0; width:26px; transform:translateX(-50%); background:#ffd75e; border-left:3px solid #d9a92f; border-right:3px solid #d9a92f; }
+  #present .lid { position:absolute; left:0; right:0; top:14px; height:38px; background:#d64557; border:3px solid #7d1f2e; transform-origin:left bottom; transition:transform .7s ease-in, opacity .7s ease-in; }
+  #present.opening .lid { transform:translateY(-46px) rotate(-18deg); opacity:.9; }
+  #open-btn { font-family:inherit; font-size:22px; letter-spacing:.25em; padding:10px 34px; background:#123; color:#ffd75e; border:2px solid #ffd75e; cursor:pointer; transition:all .2s; }
+  #open-btn:hover { background:#ffd75e; color:#123; box-shadow:0 0 18px rgba(255,215,94,.5); }
+
+  /* ============ STAGE / GAME ============ */
+  #stage { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:#0b1020; }
+  #frame { position:relative; image-rendering:pixelated; }
+  #cv { display:block; width:100%; height:100%; image-rendering:pixelated; background:#07100a; }
+
+  .hud { position:absolute; top:8px; font-size:clamp(13px,2.4vmin,19px); letter-spacing:.1em; pointer-events:none; text-shadow:0 0 6px rgba(0,0,0,.9); z-index:5; }
+  #hud-title { left:10px; color:#8fe8b0; }
+  #timer { right:10px; color:#ffd75e; font-size:clamp(16px,3.2vmin,24px); }
+  #timer.low { color:#ff5d5d; animation:pulse .5s steps(2) infinite; }
+  @keyframes pulse { 50%{opacity:.3} }
+
+  /* dialog */
+  #dialog { position:absolute; left:5%; right:5%; bottom:4.5%; background:rgba(3,10,6,.92); border:2px solid #3fae6a; padding:10px 14px; z-index:6; display:none; box-shadow:0 0 14px rgba(63,174,106,.25), inset 0 0 24px rgba(63,174,106,.08); }
+  #dialog .who { color:#ffd75e; font-size:clamp(13px,2.4vmin,18px); letter-spacing:.15em; margin-bottom:4px; }
+  #dtext { font-size:clamp(16px,3vmin,22px); line-height:1.35; color:#c9ffd9; min-height:1.4em; white-space:pre-wrap; }
+  #hint { margin-top:6px; font-size:clamp(13px,2.4vmin,17px); color:#8fa8c8; display:none; }
+  #ans-row { display:none; margin-top:8px; gap:8px; align-items:center; }
+  #answer-input { flex:1; font-family:inherit; font-size:clamp(16px,3vmin,22px); background:#04120a; border:2px solid #3fae6a; color:#d7ffe8; padding:5px 10px; outline:none; min-width:0; }
+  #answer-input:focus { box-shadow:0 0 10px rgba(63,174,106,.5); }
+  .btn { font-family:inherit; font-size:clamp(14px,2.6vmin,19px); letter-spacing:.15em; background:#0d2b1a; color:#8fe8b0; border:2px solid #3fae6a; padding:5px 16px; cursor:pointer; }
+  .btn:hover { background:#3fae6a; color:#04120a; }
+  #flash-msg { position:absolute; left:50%; top:38%; transform:translate(-50%,-50%); font-size:clamp(20px,4.5vmin,34px); letter-spacing:.2em; z-index:7; pointer-events:none; opacity:0; }
+  #flash-msg.good { color:#8fe8b0; text-shadow:0 0 16px rgba(143,232,176,.8); }
+  #flash-msg.bad { color:#ff5d5d; text-shadow:0 0 16px rgba(255,93,93,.8); }
+
+  /* joystick */
+  #joy { position:absolute; left:4%; bottom:6%; width:clamp(70px,16vmin,110px); height:clamp(70px,16vmin,110px); border-radius:50%; background:rgba(20,40,30,.45); border:2px solid rgba(63,174,106,.5); z-index:8; touch-action:none; display:none; }
+  #stick { position:absolute; left:50%; top:50%; width:42%; height:42%; transform:translate(-50%,-50%); border-radius:50%; background:rgba(143,232,176,.8); box-shadow:0 0 10px rgba(143,232,176,.6); pointer-events:none; }
+  #talk-btn { position:absolute; right:4%; bottom:6%; z-index:8; display:none; font-family:inherit; font-size:clamp(15px,3vmin,20px); letter-spacing:.2em; padding:10px 20px; background:#ffd75e; color:#123; border:2px solid #b8912a; cursor:pointer; box-shadow:0 0 14px rgba(255,215,94,.5); }
+
+  /* win overlay */
+  #win { position:absolute; inset:0; z-index:9; display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:rgba(7,16,10,.88); padding:5%; }
+  #win h2 { color:#ffd75e; font-size:clamp(22px,5vmin,40px); letter-spacing:.1em; text-shadow:0 0 18px rgba(255,215,94,.6); text-align:center; }
+  #win .deact { color:#8fe8b0; font-size:clamp(14px,3vmin,20px); letter-spacing:.3em; }
+  #letter { width:min(560px,92%); max-height:34vh; overflow-y:auto; background:#04120a; border:2px solid #3fae6a; padding:14px 18px; font-size:clamp(15px,2.8vmin,21px); line-height:1.5; color:#c9ffd9; white-space:pre-wrap; }
+  .balloon { position:absolute; bottom:-70px; width:34px; height:44px; border-radius:50% 50% 46% 46%; opacity:.92; animation:rise linear infinite; z-index:1; }
+  .balloon::after { content:""; position:absolute; left:50%; top:100%; width:2px; height:34px; background:rgba(255,255,255,.4); transform:translateX(-50%); }
+  @keyframes rise { to { transform:translateY(calc(-100vh - 160px)); } }
+
+  /* boom overlay */
+  #boom { position:absolute; inset:0; z-index:9; display:none; align-items:center; justify-content:center; background:rgba(7,16,10,.5); flex-direction:column; gap:8px; }
+  #boom h2 { color:#ff5d5d; font-size:clamp(34px,9vmin,72px); letter-spacing:.2em; text-shadow:0 0 24px rgba(255,93,93,.9); animation:pulse .6s steps(2) infinite; }
+  #boom p { color:#ffd75e; font-size:clamp(14px,3vmin,20px); letter-spacing:.2em; }
+  .shake { animation:shk .12s linear infinite; }
+  @keyframes shk { 0%{transform:translate(0,0)} 25%{transform:translate(-3px,2px)} 50%{transform:translate(2px,-3px)} 75%{transform:translate(-2px,-2px)} 100%{transform:translate(3px,2px)} }
+</style>
+</head>
+<body>
+
+<!-- GIFT -->
+<div id="gift">
+  <h1>You've received a Gamegram 🎁</h1>
+  <div class="sub">Someone made this game just for you. Tap to open it.</div>
+  <div id="present"><div class="box"></div><div class="ribbon-v"></div><div class="lid"></div></div>
+  <button id="open-btn">OPEN</button>
+</div>
+
+<!-- GAME -->
+<div id="stage">
+  <div id="frame">
+    <canvas id="cv" width="960" height="540"></canvas>
+    <div class="hud" id="hud-title">APOCALYPSE DEACTIVATED</div>
+    <div class="hud" id="timer">T-60</div>
+    <div id="flash-msg"></div>
+
+    <div id="dialog">
+      <div class="who" id="dwho"></div>
+      <div id="dtext"></div>
+      <div id="hint"></div>
+      <div id="ans-row"><input id="answer-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn" id="submit-ans">SEND</button></div>
+      <div style="margin-top:8px; text-align:right;"><button class="btn" id="next-btn" style="display:none;">NEXT ▸</button></div>
+    </div>
+
+    <div id="joy"><div id="stick"></div></div>
+    <button id="talk-btn">TALK [E]</button>
+
+    <div id="win">
+      <div class="deact">■ NUCLEAR LAUNCH DEACTIVATED ■</div>
+      <h2 id="win-headline"></h2>
+      <div id="letter"></div>
+      <button class="btn" id="again-btn">PLAY AGAIN</button>
+    </div>
+
+    <div id="boom"><h2>APOCALYPSE</h2><p>RESTARTING…</p></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= CONTENT (from the Gamegram) ================= */
+const RECIPIENT = "Sarah", CREATOR = "Mike";
+const QUESTIONS = [
+  { q:"Where did we first meet?", a:"The Blue Room", hint:"It had a terrible DJ." },
+  { q:"The first song we danced to?", a:"Don't Stop Believing", hint:"A Journey classic." },
+  { q:"What year did we move in together?", a:"2019", hint:"The year before everything closed." },
+];
+const FINAL_MESSAGE = `Happy birthday, legend!
+
+This is a long test message to check that the box stays the same size and scrolls.
+
+Line three.
+
+Line four.
+
+Line five.
+
+Line six.
+
+Line seven.
+
+Line eight.
+
+Dinner's on me Saturday.
+
+Love,
+Mike`;
+const HEADLINE = "Happy Anniversary, " + RECIPIENT + "!";
+const TIMER_START = 60;
+
+/* ================= MAP ================= */
+// 30 x 17 tiles @ 48px = 1440x816 world. # wall, . floor, 2 crate
+const MAP = [
+  "##############################",
+  "#............................#",
+  "#..####......2.......####....#",
+  "#.#....#.....................#",
+  "#.#.2..#....#####............#",
+  "#.................#...#......#",
+  "#..2..........#...#.#..2.....#",
+  "#............................#",
+  "#......##....................#",
+  "#......##......2.............#",
+  "#............................#",
+  "#..####.......#..............#",
+  "#.#....#......#....#####.....#",
+  "#.#.2..#......#..............#",
+  "#............................#",
+  "#..........2.................#",
+  "##############################",
+];
+const T = 48, MW = 30, MH = 17;
+
+/* ================= STATE ================= */
+let state = "gift";           // gift | intro | play | win | boom
+let timeLeft = TIMER_START;
+let qIndex = 0, hintShown = false;
+let introPage = 0;
+const INTRO_PAGES = [
+  { who:"SYSTEM", text:"> GAMEGRAM // APOCALYPSE DEACTIVATED\n> Someone made this game just for you." },
+  { who:"ALERT",  text:"> WARNING: NUCLEAR LAUNCH INITIATED\n> The countdown has begun. Find MIKE before time runs out." },
+  { who:"SYSTEM", text:"> ANSWER HIS QUESTIONS TO DEACTIVATE THE LAUNCH.\n> A wrong answer costs 5 seconds. Good luck, " + RECIPIENT + "." },
+];
+
+const player = { x:2*T+16, y:15*T+4, w:16, h:20, spd:170 };
+const mike   = { x:26*T+16, y:3*T+4, w:16, h:20 };
+let moveVec  = {x:0,y:0};
+let keys     = {};
+const cam    = {x:0,y:0};
+
+/* ================= DOM ================= */
+const $ = id => document.getElementById(id);
+const cv = $("cv"), ctx = cv.getContext("2d");
+const timerEl = $("timer"), dialog = $("dialog"), dwho=$("dwho"), dtext=$("dtext"),
+      hintEl = $("hint"), ansRow = $("ans-row"), input = $("answer-input"),
+      nextBtn = $("next-btn"), flashEl = $("flash-msg"), talkBtn = $("talk-btn"),
+      joy = $("joy"), stick = $("stick");
+
+/* ================= STAGE SIZING (full-screen) ================= */
+function fitStage(){
+  const f = $("frame");
+  f.style.width = "100vw"; f.style.height = "100vh";
+}
+addEventListener("resize", fitStage);
+
+/* ================= SPRITES (pixel art) ================= */
+function makeSprite(rows, palette){
+  const c = document.createElement("canvas"); c.width=16; c.height=20;
+  const g = c.getContext("2d");
+  rows.forEach((row,y)=>{ [...row].forEach((ch,x)=>{ if(ch!=="."&&x<8){ g.fillStyle=palette[ch]; g.fillRect(x*2,y*2,2,2);} });});
+  return c;
+}
+const SPRITE_ROWS = [
+  "..HHHH..",
+  ".HHHHHH.",
+  ".HSSSSH.",
+  ".HSESES.",
+  ".HSSSSH.",
+  "..BBBB..",
+  ".BBBBBB.",
+  ".B.BB.B.",
+  ".L.LL.L.",
+  ".L...L..",
+];
+const sarahSpr = makeSprite(SPRITE_ROWS, { H:"#e8b04a", S:"#f2c9a0", E:"#123", B:"#3fae6a", L:"#275d43" });
+const mikeSpr  = makeSprite(SPRITE_ROWS, { H:"#5a6b8c", S:"#e8b48c", E:"#123", B:"#d98a2b", L:"#8a5a1f" });
+
+function drawChar(spr, x, y, label){
+  ctx.drawImage(spr, Math.round(x), Math.round(y));
+  ctx.font = "9px 'VT323',monospace"; ctx.textAlign="center";
+  ctx.fillStyle = "#0b1020"; const tw = ctx.measureText(label).width;
+  ctx.fillRect(x+8-tw/2-2, y-11, tw+4, 9);
+  ctx.fillStyle = spr===sarahSpr ? "#8fe8b0" : "#ffd75e";
+  ctx.fillText(label, x+8, y-3);
+}
+
+/* ================= RENDER MAP (camera-relative) ================= */
+function drawMap(){
+  const c0=Math.max(0,Math.floor(cam.x/T)), c1=Math.min(MW-1,Math.ceil((cam.x+960)/T));
+  const r0=Math.max(0,Math.floor(cam.y/T)), r1=Math.min(MH-1,Math.ceil((cam.y+540)/T));
+  for(let r=r0;r<=r1;r++) for(let c=c0;c<=c1;c++){
+    const ch = MAP[r][c], sx=c*T-cam.x, sy=r*T-cam.y;
+    if(ch==="#"){ ctx.fillStyle="#1c2b20"; ctx.fillRect(sx,sy,T,T);
+      ctx.fillStyle="rgba(255,255,255,.04)"; ctx.fillRect(sx,sy,T,4); }
+    else { ctx.fillStyle = (r+c)%2 ? "#0d1a11" : "#0e1c13"; ctx.fillRect(sx,sy,T,T);
+      if(ch==="2"){ ctx.fillStyle="#5d4a2b"; ctx.fillRect(sx+9,sy+12,30,26);
+        ctx.strokeStyle="#3a2f1c"; ctx.lineWidth=2; ctx.strokeRect(sx+9.5,sy+12.5,29,25);
+        ctx.beginPath(); ctx.moveTo(sx+9,sy+25); ctx.lineTo(sx+39,sy+25); ctx.stroke(); } }
+  }
+}
+
+/* ================= COLLISION ================= */
+function solid(px,py,pw,ph){
+  const x0=Math.floor(px/T), y0=Math.floor(py/T), x1=Math.floor((px+pw-1)/T), y1=Math.floor((py+ph-1)/T);
+  for(let r=y0;r<=y1;r++) for(let c=x0;c<=x1;c++){
+    if(c<0||r<0||c>=MW||r>=MH) return true;
+    const ch=MAP[r][c]; if(ch==="#"||ch==="2") return true;
+  }
+  return false;
+}
+
+/* ================= DIALOG / TYPEWRITER ================= */
+let typeTimer = null, fullText = "";
+function typewrite(text){
+  clearInterval(typeTimer); fullText = text; dtext.textContent = "";
+  let i=0;
+  typeTimer = setInterval(()=>{ dtext.textContent += text[i++]; if(i>=text.length){ clearInterval(typeTimer); typeTimer=null; } }, 18);
+}
+
+/* ================= INTRO FLOW ================= */
+function showIntro(){
+  state="intro"; dialog.style.display="block"; nextBtn.style.display="inline-block";
+  ansRow.style.display="none"; hintEl.style.display="none"; talkBtn.style.display="none";
+  const p = INTRO_PAGES[introPage];
+  dwho.textContent = p.who; typewrite(p.text);
+}
+nextBtn.onclick = ()=>{
+  if(state!=="intro") return;
+  // if still typing, finish current text first (no bleed into next page)
+  if(typeTimer){ clearInterval(typeTimer); dtext.textContent = fullText; typeTimer=null; return; }
+  introPage++;
+  if(introPage < INTRO_PAGES.length){ showIntro(); }
+  else { dialog.style.display="none"; startPlay(); }
+};
+
+/* ================= PLAY ================= */
+function startPlay(){
+  state="play"; timeLeft = TIMER_START; qIndex=0; hintShown=false;
+  player.x=2*T+8; player.y=7*T+4;
+  timerEl.classList.remove("low"); updateTimer();
+}
+function updateTimer(){
+  const s = Math.max(0,Math.ceil(timeLeft));
+  timerEl.textContent = "T-"+String(s).padStart(2,"0");
+  timerEl.classList.toggle("low", s<=10 && state==="play");
+}
+
+function nearMike(){ return Math.hypot(player.x-mike.x, player.y-mike.y) < 46; }
+
+function openQuestion(){
+  if(state!=="play") return;
+  dialog.style.display="block"; nextBtn.style.display="none";
+  dwho.textContent = CREATOR + " ▸ Q"+(qIndex+1)+"/3";
+  const q = QUESTIONS[qIndex];
+  typewrite(q.q);
+  hintEl.style.display = hintShown ? "block" : "none";
+  hintEl.textContent = "HINT: "+q.hint;
+  ansRow.style.display="flex"; input.value="";
+  setTimeout(()=>input.focus(),50);
+}
+function submitAnswer(){
+  if(state!=="play") return;
+  const q = QUESTIONS[qIndex];
+  const val = input.value.trim().toLowerCase();
+  if(!val) return;
+  if(val === q.a.toLowerCase()){
+    flash("CORRECT ✓","good");
+    dialog.style.display="none"; ansRow.style.display="none";
+    qIndex++; hintShown=false;
+    if(qIndex>=QUESTIONS.length) setTimeout(winGame,650);
+  } else {
+    timeLeft = Math.max(0.1, timeLeft-5); updateTimer();
+    flash("WRONG (−5s)","bad");
+    if(!hintShown){ hintShown=true; hintEl.style.display="block"; hintEl.textContent="HINT: "+q.hint; }
+  }
+}
+$("submit-ans").onclick = submitAnswer;
+input.addEventListener("keydown", e=>{ if(e.key==="Enter") submitAnswer(); });
+
+function flash(msg, cls){
+  flashEl.textContent=msg; flashEl.className=cls; flashEl.style.opacity=1;
+  setTimeout(()=>flashEl.style.opacity=0, 900);
+}
+
+/* ================= WIN / BOOM ================= */
+function winGame(){
+  state="win"; dialog.style.display="none"; talkBtn.style.display="none"; timerEl.classList.remove("low");
+  $("win-headline").textContent = HEADLINE;
+  $("letter").textContent = FINAL_MESSAGE;
+  const w=$("win"); w.style.display="flex";
+  for(let i=0;i<14;i++){
+    const b=document.createElement("div"); b.className="balloon";
+    b.style.left=(3+Math.random()*92)+"%";
+    b.style.background=["#ff5d7e","#ffd75e","#8fe8b0","#6db5ff","#c792ea"][i%5];
+    b.style.animationDuration=(4+Math.random()*4)+"s";
+    b.style.animationDelay=(Math.random()*3)+"s";
+    w.appendChild(b);
+  }
+}
+$("again-btn").onclick = ()=>{
+  [...document.querySelectorAll(".balloon")].forEach(b=>b.remove());
+  $("win").style.display="none"; startPlay();
+};
+
+function boom(){
+  state="boom"; dialog.style.display="none"; talkBtn.style.display="none";
+  $("boom").style.display="flex"; $("frame").classList.add("shake");
+  setTimeout(()=>{
+    $("boom").style.display="none"; $("frame").classList.remove("shake");
+    introPage=0; showIntro();
+  }, 2600);
+}
+
+/* ================= INPUT: KEYBOARD ================= */
+addEventListener("keydown", e=>{
+  keys[e.key.toLowerCase()]=true;
+  if((e.key==="e"||e.key==="E") && state==="play" && nearMike()) openQuestion();
+});
+addEventListener("keyup", e=>{ keys[e.key.toLowerCase()]=false; });
+
+/* ================= INPUT: JOYSTICK (touch) ================= */
+const isTouch = matchMedia("(pointer:coarse)").matches || "ontouchstart" in window;
+if(isTouch){ joy.style.display="block"; }
+let joyId=null, jcx=0, jcy=0;
+joy.addEventListener("pointerdown", e=>{
+  joyId=e.pointerId; const r=joy.getBoundingClientRect();
+  jcx=r.left+r.width/2; jcy=r.top+r.height/2; moveJoy(e);
+});
+addEventListener("pointermove", e=>{ if(e.pointerId===joyId) moveJoy(e); });
+addEventListener("pointerup",   e=>{ if(e.pointerId===joyId){ joyId=null; moveVec={x:0,y:0}; stick.style.transform="translate(-50%,-50%)"; } });
+function moveJoy(e){
+  const r=joy.getBoundingClientRect(), max=r.width*0.32;
+  let dx=e.clientX-jcx, dy=e.clientY-jcy;
+  const d=Math.hypot(dx,dy)||1, cl=Math.min(d,max)/max;
+  dx=dx/d*cl*max; dy=dy/d*cl*max;
+  stick.style.transform=`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+  moveVec={x:dx/max, y:dy/max};
+}
+talkBtn.onclick = ()=>openQuestion();
+
+/* ================= OPEN GIFT ================= */
+$("open-btn").onclick = ()=>{
+  $("present").classList.add("opening");
+  setTimeout(()=>{
+    $("gift").style.display="none";
+    const st=$("stage"); st.style.display="flex"; fitStage();
+    showIntro(); last=performance.now(); requestAnimationFrame(loop);
+  }, 750);
+};
+
+/* ================= MAIN LOOP ================= */
+let last = performance.now(), boomT = 0;
+function loop(now){
+  const dt = Math.min(0.05,(now-last)/1000); last=now;
+
+  if(state==="play"){
+    // keyboard movement
+    let kx=(keys["d"]||keys["arrowright"]?1:0)-(keys["a"]||keys["arrowleft"]?1:0);
+    let ky=(keys["s"]||keys["arrowdown"]?1:0)-(keys["w"]||keys["arrowup"]?1:0);
+    if(kx&&ky){ kx*=Math.SQRT1_2; ky*=Math.SQRT1_2; }
+    const mx = (kx!==0||ky!==0) ? {x:kx,y:ky} : moveVec;
+    let nx = player.x + mx.x*player.spd*dt, ny = player.y + mx.y*player.spd*dt;
+    if(!solid(nx,player.y,player.w,player.h)) player.x=nx;
+    if(!solid(player.x,ny,player.w,player.h)) player.y=ny;
+
+    // timer
+    timeLeft -= dt; updateTimer();
+    if(timeLeft<=0){ boomT=now; boom(); }
+
+    // talk button visibility
+    talkBtn.style.display = (nearMike() && dialog.style.display==="none") ? "block" : "none";
+  }
+
+  /* ---- camera follow player ---- */
+  const tx = Math.max(0, Math.min(MW*T-960, player.x+8-480));
+  const ty = Math.max(0, Math.min(MH*T-540, player.y+10-270));
+  cam.x += (tx-cam.x)*Math.min(1,dt*6);
+  cam.y += (ty-cam.y)*Math.min(1,dt*6);
+
+  /* ---- draw ---- */
+  ctx.clearRect(0,0,960,540);
+  drawMap();
+  if(state!=="boom"){
+    const mxs=mike.x-cam.x, mys=mike.y-cam.y, pxs=player.x-cam.x, pys=player.y-cam.y;
+    // only draw Mike when near the viewport (he's far away)
+    if(mxs>-40&&mxs<1000&&mys>-40&&mys<580){
+      drawChar(mikeSpr, mxs, mys, CREATOR.toUpperCase());
+      if(state==="play" && nearMike()){
+        ctx.strokeStyle="rgba(255,215,94,.7)"; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(mxs+8,mys+10,16+Math.sin(now/150)*3,0,7); ctx.stroke();
+      }
+    } else if(state==="play"){
+      // off-screen indicator toward Mike (triangle at screen edge)
+      const cx=480, cy=270;
+      let dx=mike.x-cam.x-480, dy=mike.y-cam.y-270;
+      const d=Math.hypot(dx,dy)||1, nx=dx/d, ny=dy/d;
+      // clamp point to an ellipse near the screen edge
+      const ex=cx+nx*390, ey=cy+ny*215;
+      ctx.save();
+      ctx.translate(ex,ey); ctx.rotate(Math.atan2(ny,nx));
+      ctx.fillStyle="rgba(255,215,94,.85)";
+      ctx.beginPath(); ctx.moveTo(10,0); ctx.lineTo(-6,-7); ctx.lineTo(-6,7); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    drawChar(sarahSpr, pxs, pys, RECIPIENT.toUpperCase());
+  } else {
+    // explosion particles (Mike's position)
+    const t=(now-boomT)/2600;
+    const mxs=mike.x-cam.x+8, mys=mike.y-cam.y+10;
+    for(let i=0;i<40;i++){
+      const a=i/40*6.283+ (i%5)*.3, r=t*(90+i*10);
+      ctx.fillStyle=["#ffd75e","#ff9d5d","#ff5d5d","#fff"][i%4];
+      ctx.globalAlpha=Math.max(0,1-t*1.2);
+      ctx.fillRect(mxs+Math.cos(a)*r-4, mys+Math.sin(a)*r-4, 8,8);
+    }
+    ctx.globalAlpha=1;
+  }
+
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
