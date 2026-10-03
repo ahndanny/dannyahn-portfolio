@@ -143,27 +143,21 @@ const HEADLINE = "Happy Anniversary, " + RECIPIENT + "!";
 const TIMER_START = 60;
 
 /* ================= MAP ================= */
-// 30 x 17 tiles @ 48px = 1440x816 world. # wall, . floor, 2 crate
+// 20 x 11 tiles @ 48px = 960x528 world (fits the screen, no scrolling). # wall, . floor, 2 crate
 const MAP = [
-  "##############################",
-  "#............................#",
-  "#..####......2.......####....#",
-  "#.#....#.....................#",
-  "#.#.2..#....#####............#",
-  "#.................#...#......#",
-  "#..2..........#...#.#..2.....#",
-  "#............................#",
-  "#......##....................#",
-  "#......##......2.............#",
-  "#............................#",
-  "#..####.......#..............#",
-  "#.#....#......#....#####.....#",
-  "#.#.2..#......#..............#",
-  "#............................#",
-  "#..........2.................#",
-  "##############################",
+  "####################",
+  "#..................#",
+  "#..##....2.....##..#",
+  "#.#..........#.....#",
+  "#.#...#####..#..2..#",
+  "#........#.........#",
+  "#.2......#....##...#",
+  "#........#....#....#",
+  "#..###...#....#.2..#",
+  "#..................#",
+  "####################",
 ];
-const T = 48, MW = 30, MH = 17;
+const T = 48, MW = 20, MH = 11;
 
 /* ================= STATE ================= */
 let state = "gift";           // gift | intro | play | win | boom
@@ -176,11 +170,12 @@ const INTRO_PAGES = [
   { who:"SYSTEM", text:"> ANSWER HIS QUESTIONS TO DEACTIVATE THE LAUNCH.\n> A wrong answer costs 5 seconds. Good luck, " + RECIPIENT + "." },
 ];
 
-const player = { x:2*T+16, y:15*T+4, w:16, h:20, spd:170 };
-const mike   = { x:26*T+16, y:3*T+4, w:16, h:20 };
+const player = { x:2*T+16, y:9*T+4, w:16, h:20, spd:170 };
+const mike   = { x:17*T+16, y:2*T+4, w:16, h:20 };
 let moveVec  = {x:0,y:0};
 let keys     = {};
-const cam    = {x:0,y:0};
+// world (960x528) fits the canvas; center it statically (no scroll)
+const cam    = { x:0, y:(540-MH*T)/2 };
 
 /* ================= DOM ================= */
 const $ = id => document.getElementById(id);
@@ -280,7 +275,7 @@ nextBtn.onclick = ()=>{
 /* ================= PLAY ================= */
 function startPlay(){
   state="play"; timeLeft = TIMER_START; qIndex=0; hintShown=false;
-  player.x=2*T+8; player.y=7*T+4;
+  player.x=2*T+8; player.y=9*T+4;
   timerEl.classList.remove("low"); updateTimer();
 }
 function updateTimer(){
@@ -415,11 +410,7 @@ function loop(now){
     talkBtn.style.display = (nearMike() && dialog.style.display==="none") ? "block" : "none";
   }
 
-  /* ---- camera follow player ---- */
-  const tx = Math.max(0, Math.min(MW*T-960, player.x+8-480));
-  const ty = Math.max(0, Math.min(MH*T-540, player.y+10-270));
-  cam.x += (tx-cam.x)*Math.min(1,dt*6);
-  cam.y += (ty-cam.y)*Math.min(1,dt*6);
+  /* ---- camera (static; whole world fits on screen) ---- */
 
   /* ---- draw ---- */
   ctx.clearRect(0,0,960,540);
