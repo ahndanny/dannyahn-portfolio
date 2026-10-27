@@ -4,154 +4,195 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Olivia's Activity Jar</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🫙</text></svg>" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg1: #fdf3e7;
-    --bg2: #f3e8ff;
-    --ink: #3d2b56;
-    --accent: #e05d8c;
-    --accent2: #9a6bfb;
-    --gold: #f7b32b;
-    --card: #fffdf8;
-    --shadow: 0 10px 30px rgba(61,43,86,.12);
+    --bg1:#fdf3e7; --bg2:#f3e8ff; --bg3:#ffe9d1;
+    --ink:#3d2b56; --muted:#7a6a94; --faint:#a094b8;
+    --accent:#e05d8c; --accent2:#9a6bfb; --gold:#f7b32b;
+    --card:#fffdf8; --chip:#faf7ff; --chipborder:#eee6f9; --field:#faf7ff; --fieldborder:#e5dcf2;
+    --shadow:0 10px 30px rgba(61,43,86,.12);
+  }
+  body[data-theme="dark"] {
+    --bg1:#221a33; --bg2:#2b2142; --bg3:#31204a;
+    --ink:#efe8ff; --muted:#b3a6cf; --faint:#8d7fae;
+    --card:#2d2342; --chip:#372b52; --chipborder:#4a3a6e; --field:#372b52; --fieldborder:#4a3a6e;
+    --shadow:0 10px 30px rgba(0,0,0,.35);
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body { min-height:100%; }
   body {
-    font-family:'Nunito',sans-serif;
-    color:var(--ink);
-    background: radial-gradient(1200px 800px at 15% -10%, var(--bg2), transparent 60%),
-                radial-gradient(1000px 700px at 110% 110%, #ffe9d1, transparent 55%),
-                var(--bg1);
+    font-family:'Nunito',sans-serif; color:var(--ink);
+    background:
+      radial-gradient(1200px 800px at 15% -10%, var(--bg2), transparent 60%),
+      radial-gradient(1000px 700px at 110% 110%, var(--bg3), transparent 55%),
+      var(--bg1);
     display:flex; flex-direction:column; align-items:center;
-    padding: 28px 16px 60px;
-    overflow-x:hidden;
+    padding:24px 16px 60px; overflow-x:hidden;
+    transition: background .4s, color .4s;
   }
-  h1, h2, .big { font-family:'Baloo 2',sans-serif; }
-  h1 { font-size:clamp(30px,6vw,46px); font-weight:800; letter-spacing:.01em; text-align:center; }
+  h1,h2,.big { font-family:'Baloo 2',sans-serif; }
+  .header { position:relative; width:100%; max-width:1060px; text-align:center; }
+  h1 { font-size:clamp(30px,6vw,46px); font-weight:800; }
   h1 .j { color:var(--accent); }
-  .sub { color:#7a6a94; text-align:center; margin-top:6px; font-size:15px; }
+  .sub { color:var(--muted); text-align:center; margin-top:6px; font-size:15px; }
+  .theme-btn {
+    position:absolute; right:0; top:4px; width:44px; height:44px; border-radius:14px;
+    border:2px solid var(--chipborder); background:var(--card); color:var(--ink);
+    font-size:20px; cursor:pointer; box-shadow:var(--shadow); transition:transform .15s;
+  }
+  .theme-btn:hover { transform:scale(1.08); }
 
-  .layout {
-    display:flex; flex-wrap:wrap; gap:34px; justify-content:center; align-items:flex-start;
-    width:100%; max-width:1060px; margin-top:34px;
-  }
-  .panel {
-    background:var(--card); border-radius:22px; box-shadow:var(--shadow);
-    padding:24px; width:100%;
-  }
+  .layout { display:flex; flex-wrap:wrap; gap:30px; justify-content:center; align-items:flex-start;
+    width:100%; max-width:1060px; margin-top:30px; }
+  .panel { background:var(--card); border-radius:22px; box-shadow:var(--shadow); padding:24px; width:100%;
+    transition:background .4s; }
   .left { flex:1 1 420px; max-width:480px; }
-  .right { flex:1 1 400px; max-width:520px; display:flex; flex-direction:column; gap:22px; }
+  .right { flex:1 1 400px; max-width:520px; display:flex; flex-direction:column; gap:18px; }
 
-  /* ---------- jar panel ---------- */
+  /* ---------- jar ---------- */
   .stage { position:relative; display:flex; flex-direction:column; align-items:center; }
-  #jar-wrap { position:relative; width:min(340px,86vw); }
+  #jar-wrap { position:relative; width:min(340px,86vw); cursor:pointer; }
+  #jar-wrap:hover .glass-shine { opacity:.95; }
   #jar-svg { width:100%; display:block; }
+  .glass-shine { opacity:.8; transition:opacity .3s; }
+  #jar-hint { font-size:12.5px; color:var(--faint); margin-top:2px; font-style:italic; }
 
-  /* papers inside the jar (real DOM slips positioned over the svg) */
   #slips { position:absolute; inset:0; pointer-events:none; }
   .slip {
-    position:absolute; min-width:34px; max-width:88px; height:13px; border-radius:3px;
-    font-size:7.5px; line-height:13px; text-align:center; color:#5b4322;
+    position:absolute; min-width:34px; max-width:88px; height:14px; border-radius:3px;
+    font-size:8px; line-height:14px; text-align:center; color:#3d2b56; font-weight:700;
     overflow:hidden; white-space:nowrap; text-overflow:ellipsis; padding:0 3px;
     display:flex; align-items:center; justify-content:center; gap:3px;
     box-shadow:0 1px 3px rgba(0,0,0,.25);
     transition: top .55s cubic-bezier(.34,1.3,.64,1), left .55s ease, transform .55s ease, opacity .3s;
   }
-  .slip .num {
-    flex:none; width:10px; height:10px; border-radius:50%; background:rgba(61,43,86,.85);
-    color:#fff; font-size:6.5px; font-weight:700; line-height:10px; text-align:center; font-family:'Baloo 2',sans-serif;
-  }
-  .slip.falling { animation:none; }
+  .slip .num { flex:none; width:11px; height:11px; border-radius:50%; background:rgba(61,43,86,.85);
+    color:#fff; font-size:7px; font-weight:800; line-height:11px; text-align:center; font-family:'Baloo 2',sans-serif; }
   .slip.drawn { opacity:0; transform:scale(1.3) rotate(20deg); }
+  .slip.winner { animation:winslip 1.4s ease forwards; z-index:5; }
+  @keyframes winslip {
+    0% { transform:translate(-50%,-50%) scale(1); filter:brightness(1); }
+    30% { transform:translate(-50%,-50%) scale(1.5) rotate(-6deg); filter:brightness(1.35); }
+    100% { transform:translate(-50%,-50%) scale(1); filter:brightness(1); }
+  }
 
   /* dice */
-  #dice-zone { margin-top:20px; display:flex; flex-direction:column; align-items:center; gap:14px; }
-  #dice {
-    width:96px; height:96px; cursor:pointer; user-select:none; display:block;
-    filter: drop-shadow(0 10px 16px rgba(61,43,86,.3));
-  }
+  #dice-zone { margin-top:18px; display:flex; flex-direction:column; align-items:center; gap:13px; }
+  #dice { width:96px; height:96px; cursor:pointer; user-select:none; display:block;
+    filter:drop-shadow(0 10px 16px rgba(61,43,86,.3)); }
   #dice.rolling { animation:shake .45s ease infinite; }
-  @keyframes shake {
-    0%,100% { transform:rotate(0deg); }
-    25% { transform:rotate(-14deg) translateY(-6px); }
-    75% { transform:rotate(14deg); }
-  }
+  @keyframes shake { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-14deg) translateY(-6px)} 75%{transform:rotate(14deg)} }
   #dice-num { font-family:'Baloo 2',sans-serif; font-weight:800; fill:#fff; text-anchor:middle; dominant-baseline:central; }
-  #roll-btn {
-    font-family:'Baloo 2',sans-serif; font-size:20px; font-weight:700; letter-spacing:.03em;
+  .btn-row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .roll-btn {
+    font-family:'Baloo 2',sans-serif; font-size:19px; font-weight:700; letter-spacing:.03em;
     color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent2));
-    border:none; border-radius:999px; padding:13px 40px; cursor:pointer;
-    box-shadow:0 8px 20px rgba(224,93,140,.4); transition:transform .15s ease, box-shadow .15s ease;
+    border:none; border-radius:999px; padding:13px 34px; cursor:pointer;
+    box-shadow:0 8px 20px rgba(224,93,140,.4); transition:transform .15s, box-shadow .15s;
   }
-  #roll-btn:hover { transform:translateY(-2px); box-shadow:0 12px 26px rgba(224,93,140,.5); }
-  #roll-btn:active { transform:translateY(1px); }
-  #roll-btn:disabled { opacity:.55; cursor:default; transform:none; }
+  .roll-btn.alt { background:linear-gradient(135deg,var(--gold),var(--accent)); box-shadow:0 8px 20px rgba(247,179,43,.35); }
+  .roll-btn:hover { transform:translateY(-2px); }
+  .roll-btn:active { transform:translateY(1px); }
+  .roll-btn:disabled { opacity:.55; cursor:default; transform:none; }
 
-  /* result banner */
-  #result {
-    margin-top:22px; min-height:96px; width:min(440px,94vw);
+  #result { margin-top:20px; min-height:96px; width:min(440px,94vw);
     background:var(--card); border-radius:20px; box-shadow:var(--shadow);
     display:flex; align-items:center; justify-content:center; text-align:center;
-    padding:18px 20px; border:3px dashed transparent;
-  }
+    padding:18px 20px; border:3px dashed transparent; }
   #result.show { border-color:var(--gold); animation:pop .5s cubic-bezier(.3,1.6,.5,1); }
   @keyframes pop { 0%{transform:scale(.85)} 100%{transform:scale(1)} }
   #result .big { font-size:clamp(22px,5vw,32px); font-weight:800; color:var(--accent); }
-  #result .tick { font-size:14px; color:#7a6a94; margin-top:4px; }
+  #result .tick { font-size:14px; color:var(--muted); margin-top:4px; }
 
-  /* ---------- activity manager ---------- */
-  .add-row { display:flex; gap:10px; margin-bottom:16px; }
-  #new-act {
-    flex:1; font-family:'Nunito',sans-serif; font-size:16px; font-weight:600;
-    padding:12px 16px; border-radius:12px; border:2px solid #e5dcf2; background:#faf7ff;
-    color:var(--ink); outline:none; min-width:0;
-  }
+  /* ---------- manager ---------- */
+  h2 { font-size:22px; margin-bottom:12px; }
+  .add-row { display:flex; gap:10px; margin-bottom:14px; }
+  #new-act { flex:1; font-family:'Nunito',sans-serif; font-size:16px; font-weight:600;
+    padding:12px 16px; border-radius:12px; border:2px solid var(--fieldborder); background:var(--field);
+    color:var(--ink); outline:none; min-width:0; }
   #new-act:focus { border-color:var(--accent2); box-shadow:0 0 0 3px rgba(154,107,251,.15); }
-  #add-btn {
-    font-family:'Baloo 2',sans-serif; font-size:17px; font-weight:700;
-    background:var(--accent2); color:#fff; border:none; border-radius:12px;
-    padding:0 20px; cursor:pointer; transition:filter .15s;
-  }
-  #add-btn:hover { filter:brightness(1.1); }
+  .icon-btn { font-family:'Baloo 2',sans-serif; font-size:17px; font-weight:700; background:var(--accent2);
+    color:#fff; border:none; border-radius:12px; padding:0 18px; cursor:pointer; transition:filter .15s; }
+  .icon-btn:hover { filter:brightness(1.1); }
 
-  #acts { list-style:none; display:flex; flex-direction:column; gap:10px; max-height:420px; overflow-y:auto; padding-right:4px; }
-  #acts li {
-    display:flex; align-items:center; gap:10px;
-    background:#faf7ff; border:2px solid #eee6f9; border-radius:14px;
-    padding:10px 14px; font-size:15.5px; font-weight:600;
-  }
+  #acts { list-style:none; display:flex; flex-direction:column; gap:9px; max-height:400px; overflow-y:auto; padding-right:4px; }
+  #acts li { display:flex; align-items:center; gap:8px; background:var(--chip);
+    border:2px solid var(--chipborder); border-radius:14px; padding:9px 12px; font-size:15px; font-weight:700; }
   #acts li .swatch { width:14px; height:14px; border-radius:4px; flex:none; }
   #acts li .name { flex:1; word-break:break-word; }
-  #acts li .rm {
-    flex:none; width:28px; height:28px; border-radius:8px; border:none; cursor:pointer;
-    background:#f3e4ee; color:#b23a67; font-size:16px; font-weight:700; line-height:1;
-  }
-  #acts li .rm:hover { background:#e8cfe0; }
-  .empty-note { text-align:center; color:#a094b8; font-size:14px; padding:14px 0; font-style:italic; }
-  #count-badge { font-size:13px; color:#7a6a94; margin-top:12px; text-align:right; }
+  #acts li .name input { width:100%; font:inherit; color:inherit; background:var(--field);
+    border:2px solid var(--accent2); border-radius:8px; padding:2px 8px; outline:none; }
+  .chipbtn { flex:none; min-width:34px; height:28px; border-radius:8px; border:none; cursor:pointer;
+    font-size:12px; font-weight:800; font-family:'Baloo 2',sans-serif; }
+  .chipbtn.weight { background:#efe7ff; color:#7a4ce0; }
+  .chipbtn.weight.on { background:#7a4ce0; color:#fff; }
+  .chipbtn.rename { background:#e6f2ee; color:#2a8f6a; font-size:13px; }
+  .chipbtn.rm { background:#f3e4ee; color:#b23a67; font-size:15px; }
+  .chipbtn:hover { filter:brightness(1.06); }
+  .empty-note { text-align:center; color:var(--faint); font-size:14px; padding:14px 0; font-style:italic; }
+  #count-badge { font-size:13px; color:var(--muted); margin-top:10px; text-align:right; }
 
-  .confetti { position:fixed; width:10px; height:10px; top:-14px; z-index:60; pointer-events:none;
-    animation:fall linear forwards; }
+  /* settings row */
+  .settings { display:flex; gap:10px; flex-wrap:wrap; }
+  .toggle { display:flex; align-items:center; gap:8px; background:var(--chip); border:2px solid var(--chipborder);
+    border-radius:999px; padding:8px 14px; font-size:14px; font-weight:700; cursor:pointer; user-select:none; color:var(--muted); }
+  .toggle.on { border-color:var(--accent2); color:var(--ink); background:var(--field); }
+  .toggle .dot { width:10px; height:10px; border-radius:50%; background:#cbbfe4; }
+  .toggle.on .dot { background:var(--accent2); }
+
+  /* history */
+  .hist-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .hist-head button { border:none; background:none; color:var(--faint); font-size:12.5px; cursor:pointer; font-family:'Nunito'; font-weight:700; }
+  .hist-head button:hover { color:var(--accent); }
+  #history { display:flex; flex-wrap:wrap; gap:8px; min-height:20px; }
+  .hist-chip { background:var(--chip); border:2px solid var(--chipborder); border-radius:999px;
+    font-size:13px; font-weight:700; padding:5px 12px; color:var(--muted); }
+  .hist-chip b { color:var(--accent); }
+
+  .data-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .data-btn { font-family:'Nunito'; font-weight:800; font-size:13.5px; background:var(--chip); color:var(--muted);
+    border:2px solid var(--chipborder); border-radius:10px; padding:8px 14px; cursor:pointer; }
+  .data-btn:hover { border-color:var(--accent2); color:var(--ink); }
+  .data-btn.danger:hover { border-color:var(--accent); color:var(--accent); }
+  #file-in { display:none; }
+
+  /* toast */
+  #toast { position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(80px); z-index:80;
+    background:var(--card); color:var(--ink); border:2px solid var(--chipborder); border-radius:14px;
+    padding:10px 16px; font-size:14.5px; font-weight:700; box-shadow:var(--shadow);
+    display:flex; align-items:center; gap:12px; transition:transform .3s cubic-bezier(.3,1.4,.5,1); pointer-events:none; }
+  #toast.show { transform:translateX(-50%) translateY(0); pointer-events:auto; }
+  #toast button { border:none; background:var(--accent2); color:#fff; font-family:'Baloo 2'; font-weight:700;
+    border-radius:8px; padding:5px 12px; cursor:pointer; }
+
+  .confetti { position:fixed; width:10px; height:10px; top:-14px; z-index:60; pointer-events:none; animation:fall linear forwards; }
   @keyframes fall { to { transform:translateY(110vh) rotate(720deg); } }
+  .burst { position:fixed; z-index:61; pointer-events:none; width:9px; height:9px; border-radius:50%;
+    animation:burst .9s cubic-bezier(.2,.8,.4,1) forwards; }
+  @keyframes burst { 0%{transform:translate(0,0) scale(1); opacity:1} 100%{transform:translate(var(--dx),var(--dy)) scale(.3); opacity:0} }
 
-  footer { margin-top:40px; font-size:13px; color:#a094b8; text-align:center; }
-  @media (max-width:900px){ .left{order:2} .right{order:1; width:100%; max-width:480px;} }
+  footer { margin-top:36px; font-size:13px; color:var(--faint); text-align:center; }
+  @media (max-width:900px){ .left{order:2} .right{order:1; width:100%; max-width:480px;} .theme-btn{position:static; margin-bottom:10px;} }
+  @media (prefers-reduced-motion:reduce){ *,*::before,*::after{ animation-duration:.01s !important; transition-duration:.01s !important; } }
 </style>
 </head>
 <body>
 
-<h1><span class="j">Olivia's</span> Activity Jar</h1>
-<p class="sub">Add activities, roll the dice, and let the jar decide.</p>
+<div class="header">
+  <button class="theme-btn" id="theme-btn" title="Switch theme" aria-label="Switch theme">🌙</button>
+  <h1><span class="j">Olivia's</span> Activity Jar</h1>
+  <p class="sub">Add activities, roll the dice or draw from the jar, and let it decide.</p>
+</div>
 
 <div class="layout">
 
   <!-- LEFT: jar + dice -->
   <div class="panel left">
     <div class="stage">
-      <div id="jar-wrap">
+      <div id="jar-wrap" title="Click the jar to draw!">
         <svg id="jar-svg" viewBox="0 0 300 340">
           <defs>
             <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
@@ -160,20 +201,17 @@
               <stop offset="1" stop-color="#e8f7fb" stop-opacity=".7"/>
             </linearGradient>
           </defs>
-          <!-- lid knob -->
           <ellipse cx="150" cy="30" rx="26" ry="12" fill="#c98a3d"/>
           <ellipse cx="150" cy="26" rx="26" ry="10" fill="#e9a955"/>
-          <!-- lid rim -->
           <rect x="78" y="42" width="144" height="26" rx="10" fill="#d99a45"/>
           <rect x="78" y="42" width="144" height="13" rx="6" fill="#eeb264"/>
-          <!-- jar body -->
           <path d="M70 72 Q60 80 58 100 L58 288 Q58 318 90 322 L210 322 Q242 318 242 288 L242 100 Q240 80 230 72 Z"
                 fill="url(#glass)" stroke="#a9d6e2" stroke-width="3"/>
-          <!-- glass highlight -->
-          <path d="M84 90 Q78 100 77 120 L77 270" stroke="rgba(255,255,255,.8)" stroke-width="7" stroke-linecap="round" fill="none"/>
+          <path class="glass-shine" d="M84 90 Q78 100 77 120 L77 270" stroke="rgba(255,255,255,.8)" stroke-width="7" stroke-linecap="round" fill="none"/>
         </svg>
         <div id="slips"></div>
       </div>
+      <div id="jar-hint">psst — you can also click the jar to draw</div>
 
       <div id="dice-zone">
         <svg id="dice" viewBox="0 0 100 100" title="Click to roll!" role="img" aria-label="dice">
@@ -189,7 +227,10 @@
           <polygon id="dice-face" points="" fill="rgba(255,255,255,.10)" stroke="rgba(255,255,255,.5)" stroke-width="1.4"/>
           <text id="dice-num" x="50" y="52">d6</text>
         </svg>
-        <button id="roll-btn">Roll the Dice!</button>
+        <div class="btn-row">
+          <button class="roll-btn" id="roll-btn">Roll the Dice!</button>
+          <button class="roll-btn alt" id="draw-btn">Draw a Slip!</button>
+        </div>
       </div>
 
       <div id="result"><span class="sub" style="margin:0">Your activity will appear here…</span></div>
@@ -198,190 +239,366 @@
 
   <!-- RIGHT: manager -->
   <div class="panel right">
-    <h2 style="font-size:24px; margin-bottom:14px;">Manage Activities</h2>
-    <div class="add-row">
-      <input id="new-act" type="text" maxlength="40" placeholder="Type an activity…" autocomplete="off" />
-      <button id="add-btn">Add</button>
+    <div>
+      <h2>Manage Activities</h2>
+      <div class="add-row">
+        <input id="new-act" type="text" maxlength="40" placeholder="Type an activity…" autocomplete="off" />
+        <button class="icon-btn" id="add-btn">Add</button>
+      </div>
+      <ul id="acts"></ul>
+      <div class="empty-note" id="empty-note" style="display:none;">The jar is empty — add an activity above!</div>
+      <div id="count-badge"></div>
     </div>
-    <ul id="acts"></ul>
-    <div class="empty-note" id="empty-note" style="display:none;">The jar is empty — add an activity above!</div>
-    <div id="count-badge"></div>
+
+    <div>
+      <h2>Fine-Tuning</h2>
+      <div class="settings">
+        <div class="toggle" id="t-norepeat"><span class="dot"></span>No back-to-back repeats</div>
+        <div class="toggle" id="t-sound"><span class="dot"></span>Sound on</div>
+      </div>
+      <div class="data-row" style="margin-top:12px;">
+        <button class="data-btn" id="export-btn">⬇ Export</button>
+        <button class="data-btn" id="import-btn">⬆ Import</button>
+        <button class="data-btn danger" id="reset-btn">↺ Reset list</button>
+      </div>
+      <input type="file" id="file-in" accept="application/json" />
+    </div>
+
+    <div>
+      <div class="hist-head"><h2 style="margin:0;">Recent Picks</h2><button id="clear-hist">clear</button></div>
+      <div id="history"></div>
+    </div>
   </div>
 
 </div>
 
-<footer>Built with love for Olivia ♥ — your choices are saved on this device.</footer>
+<div id="toast"><span id="toast-msg"></span><button id="toast-act" style="display:none;">Undo</button></div>
+
+<footer>Built with love for Olivia ♥ — saved on this device, including your list, history, and settings.</footer>
 
 <script>
 (function(){
-  const KEY = 'olivias-activity-jar-v1';
+  const KEY = 'olivias-activity-jar-v1';   // same storage key as the live version — existing lists carry over
   const PALETTE = ['#ffd166','#ef7fa3','#7fc8f8','#9ad99c','#c9a4f7','#f8b26a','#f78f8f','#8fe3d1'];
-
   const DEFAULTS = ['Movie night','Board games','Go for a walk','Arts & crafts','Bake cookies',
                     'Dance party','Read a book','Video games','Puzzle time','Picnic'];
 
-  let acts = load();
-
   const $ = id => document.getElementById(id);
-  const listEl = $('acts'), slipsEl = $('slips'), emptyNote = $('empty-note'),
-        badge = $('count-badge'), dice = $('dice'), diceShape = $('dice-shape'),
-        diceFacets = $('dice-facets'), diceFace = $('dice-face'), diceNum = $('dice-num'),
-        rollBtn = $('roll-btn'), input = $('new-act'), addBtn = $('add-btn'),
-        result = $('result');
+  const listEl=$('acts'), slipsEl=$('slips'), emptyNote=$('empty-note'), badge=$('count-badge'),
+        dice=$('dice'), diceShape=$('dice-shape'), diceFacets=$('dice-facets'), diceFace=$('dice-face'), diceNum=$('dice-num'),
+        rollBtn=$('roll-btn'), drawBtn=$('draw-btn'), input=$('new-act'), addBtn=$('add-btn'),
+        result=$('result'), histEl=$('history'), toast=$('toast'), toastMsg=$('toast-msg'), toastAct=$('toast-act');
+
+  /* ---------- state (v2: objects with weight; migrates v1 plain strings) ---------- */
+  let acts = [];         // [{name, w}]
+  let settings = { theme:'light', sound:true, norepeat:false };
+  let history = [];      // [{name, ts}]
+  let lastPick = null;
+  let undoBuf = null;    // {index, item}
 
   function load(){
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw === null) return DEFAULTS.slice();
+      if (raw === null) { acts = DEFAULTS.map(n=>({name:n,w:1})); return; }
       const arr = JSON.parse(raw);
-      return Array.isArray(arr) ? arr : [];
-    } catch(e){ return DEFAULTS.slice(); }
+      if (!Array.isArray(arr)) { acts = []; return; }
+      acts = arr.map(x => typeof x === 'string' ? {name:x,w:1}
+                 : (x && typeof x.name === 'string' ? {name:x.name, w: x.w===2?2:1} : null)).filter(Boolean);
+      if (arr.length && typeof arr[0]==='string') saveAll(); // migrate v1 -> v2 on read
+    } catch(e){ acts = DEFAULTS.map(n=>({name:n,w:1})); }
   }
-  function save(){ localStorage.setItem(KEY, JSON.stringify(acts)); }
+  function loadMeta(){
+    try {
+      const m = JSON.parse(localStorage.getItem(KEY+':meta')||'{}');
+      if (m.settings) settings = Object.assign(settings, m.settings);
+      if (Array.isArray(m.history)) history = m.history;
+    } catch(e){}
+  }
+  function saveAll(){
+    localStorage.setItem(KEY, JSON.stringify(acts));
+    localStorage.setItem(KEY+':meta', JSON.stringify({settings, history}));
+  }
 
   function colorFor(i){ return PALETTE[i % PALETTE.length]; }
 
-  /* ---------- jar slip layout (deterministic pile so it doesn't jump around) ---------- */
-  const VBW = 300, VBH = 340; // matches #jar-svg viewBox
-  const JAR = { top:100, bottom:304, left:74, right:226 }; // pile region in viewBox px
-  function pileSpot(i, n){
-    // simple pseudo-random scatter seeded by index; rows fill bottom-up
-    const seed = (i * 2654435761) % 4294967296;
-    const rows = Math.min(7, Math.max(1, Math.ceil(n / 3)));
-    const row = i % rows;
-    const yFrac = 0.92 - (row / rows) * 0.75;           // bottom -> up
-    const xFrac = 0.18 + ((seed % 1000) / 1000) * 0.62; // scatter horizontally
-    const rot = ((seed >> 8) % 40) - 20;
-    const x = JAR.left + xFrac * (JAR.right - JAR.left);
-    const y = JAR.top + yFrac * (JAR.bottom - JAR.top);
-    return { topPct: (y/VBH*100).toFixed(1), leftPct: (x/VBW*100).toFixed(1), rot };
+  /* ---------- theme ---------- */
+  function applyTheme(){
+    document.body.setAttribute('data-theme', settings.theme);
+    $('theme-btn').textContent = settings.theme==='dark' ? '☀️' : '🌙';
+  }
+  $('theme-btn').onclick = () => { settings.theme = settings.theme==='dark'?'light':'dark'; applyTheme(); saveAll(); };
+
+  /* ---------- sound (tiny WebAudio pop/chime, gesture-safe) ---------- */
+  let AC = null;
+  function ding(){
+    if(!settings.sound) return;
+    try {
+      AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+      const t = AC.currentTime;
+      [523.25, 659.25, 783.99].forEach((f,i)=>{
+        const o = AC.createOscillator(), g = AC.createGain();
+        o.type='sine'; o.frequency.value=f;
+        g.gain.setValueAtTime(0, t+i*0.09);
+        g.gain.linearRampToValueAtTime(0.18, t+i*0.09+0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t+i*0.09+0.5);
+        o.connect(g).connect(AC.destination); o.start(t+i*0.09); o.stop(t+i*0.09+0.55);
+      });
+    } catch(e){}
+  }
+
+  /* ---------- jar slip layout ---------- */
+  const VBW=300, VBH=340;
+  const JAR={ top:100, bottom:304, left:74, right:226 };
+  function pileSpot(i,n){
+    const seed = (i*2654435761) % 4294967296;
+    const rows = Math.min(7, Math.max(1, Math.ceil(n/3)));
+    const row = i%rows;
+    const yFrac = 0.92 - (row/rows)*0.75;
+    const xFrac = 0.18 + ((seed%1000)/1000)*0.62;
+    const rot = ((seed>>8)%40)-20;
+    const x = JAR.left + xFrac*(JAR.right-JAR.left);
+    const y = JAR.top + yFrac*(JAR.bottom-JAR.top);
+    return { topPct:(y/VBH*100).toFixed(1), leftPct:(x/VBW*100).toFixed(1), rot };
   }
 
   /* ---------- render ---------- */
-  let slipEls = {};   // name -> element
+  let slipEls = {};
   function render(fast){
     listEl.innerHTML = '';
-    acts.forEach((name, i) => {
+    acts.forEach((a, i) => {
       const li = document.createElement('li');
       const sw = document.createElement('span'); sw.className='swatch'; sw.style.background=colorFor(i);
-      const nm = document.createElement('span'); nm.className='name'; nm.textContent=(i+1) + '. ' + name;
-      const rm = document.createElement('button'); rm.className='rm'; rm.textContent='✕'; rm.title='Remove';
+      const nm = document.createElement('span'); nm.className='name'; nm.textContent=(i+1)+'. '+a.name;
+      const wt = document.createElement('button'); wt.className='chipbtn weight'+(a.w===2?' on':'');
+      wt.textContent = a.w===2?'×2':'×1'; wt.title='Double chance (click to toggle)';
+      wt.onclick = () => { a.w = a.w===2?1:2; saveAll(); render(); };
+      const ren = document.createElement('button'); ren.className='chipbtn rename'; ren.textContent='✎'; ren.title='Rename';
+      ren.onclick = () => startRename(i, nm);
+      const rm = document.createElement('button'); rm.className='chipbtn rm'; rm.textContent='✕'; rm.title='Remove';
       rm.onclick = () => removeAct(i);
-      li.append(sw,nm,rm); listEl.appendChild(li);
+      li.append(sw,nm,wt,ren,rm); listEl.appendChild(li);
     });
-    emptyNote.style.display = acts.length ? 'none' : 'block';
-    badge.textContent = acts.length + ' activit' + (acts.length===1?'y':'ies') + ' in the jar';
-    rollBtn.disabled = acts.length < 2;
-    updateDiceShape();
+    emptyNote.style.display = acts.length?'none':'block';
+    const totalW = acts.reduce((s,a)=>s+a.w,0);
+    badge.textContent = acts.length+' activit'+(acts.length===1?'y':'ies')+' in the jar'+(totalW>acts.length?' ('+totalW+' chances total)':'');
+    const can = acts.length>=2;
+    rollBtn.disabled = !can; drawBtn.disabled = !can;
+    updateDiceShape(); renderHistory();
 
-    // reconcile slips
     const seen = new Set();
-    acts.forEach((name,i)=>{
+    acts.forEach((a,i)=>{
+      const name = a.name;
       let el = slipEls[name];
       if(!el){
         el = document.createElement('div'); el.className='slip';
         el.style.background = colorFor(i);
-        const num = document.createElement('span'); num.className='num';
+        const num = document.createElement('span'); num.className='num'; num.textContent=String(i+1);
         const lbl = document.createElement('span'); lbl.textContent=name;
-        el.append(num, lbl);
-        el.dataset.num = String(i+1);
+        el.append(num,lbl);
         const s0 = pileSpot(i, acts.length);
-        el.style.left = s0.leftPct+'%'; el.style.top = '6%'; el.style.opacity='0';
-        el.style.transform = 'translate(-50%,-50%) rotate(' + s0.rot + 'deg)';
+        el.style.left=s0.leftPct+'%'; el.style.top='6%'; el.style.opacity='0';
+        el.style.transform='translate(-50%,-50%) rotate('+s0.rot+'deg)';
         slipsEl.appendChild(el); slipEls[name]=el;
-        num.textContent = String(i+1);
-        requestAnimationFrame(()=>requestAnimationFrame(()=>{
-          el.style.opacity='1'; el.style.top=s0.topPct+'%';
-        }));
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{ el.style.opacity='1'; el.style.top=s0.topPct+'%'; }));
       } else {
         const s = pileSpot(i, acts.length);
         el.style.left=s.leftPct+'%'; el.style.top=s.topPct+'%';
         el.style.transform='translate(-50%,-50%) rotate('+s.rot+'deg)';
         el.style.background=colorFor(i);
-        const nEl = el.querySelector('.num'); if(nEl) nEl.textContent = String(i+1);
+        const nEl = el.querySelector('.num'); if(nEl) nEl.textContent=String(i+1);
       }
       seen.add(name);
     });
-    Object.keys(slipEls).forEach(name=>{
-      if(!seen.has(name)){ slipEls[name].remove(); delete slipEls[name]; }
-    });
+    Object.keys(slipEls).forEach(name=>{ if(!seen.has(name)){ slipEls[name].remove(); delete slipEls[name]; } });
+  }
+
+  function startRename(i, nmEl){
+    const a = acts[i];
+    nmEl.textContent = '';
+    const inp = document.createElement('input'); inp.value = a.name; inp.maxLength = 40;
+    nmEl.appendChild(inp); inp.focus(); inp.select();
+    let done = false;
+    const commit = () => {
+      if (done) return; done = true;
+      const v = inp.value.trim();
+      if (v && v!==a.name) { a.name = v; saveAll(); }
+      render();
+    };
+    inp.addEventListener('keydown', e => { if(e.key==='Enter') commit(); if(e.key==='Escape'){done=true;render();} });
+    inp.addEventListener('blur', commit);
   }
 
   function addAct(){
     const name = input.value.trim();
     if(!name) return;
-    if(acts.some(a=>a.toLowerCase()===name.toLowerCase())){ input.value=''; return; }
-    acts.push(name); save(); render(); input.value=''; input.focus();
+    if(acts.some(a=>a.name.toLowerCase()===name.toLowerCase())){ input.value=''; return; }
+    acts.push({name, w:1}); saveAll(); render(); input.value=''; input.focus();
   }
   function removeAct(i){
-    const name = acts[i];
-    const el = slipEls[name];
-    if(el){ el.classList.add('drawn'); setTimeout(()=>{el.remove(); delete slipEls[name];}, 350); }
-    acts.splice(i,1); save(); render();
+    const item = acts[i];
+    const el = slipEls[item.name];
+    if(el){ el.classList.add('drawn'); setTimeout(()=>{el.remove(); delete slipEls[item.name];},350); }
+    acts.splice(i,1); saveAll(); render();
+    toastMsg.textContent = '"'+item.name+'" removed';
+    toastAct.style.display='inline-block';
+    toastAct.onclick = () => { acts.splice(Math.min(i,acts.length),0,item); saveAll(); render(); hideToast(); };
+    showToast(4000);
   }
 
-  /* ---------- multi-face dice: polygon gem, sides = number of activities (min 6) ---------- */
-  function polyPoints(n, cx, cy, r){
-    const pts = [];
-    const off = -Math.PI/2; // point up
-    for(let i=0;i<n;i++){
-      const a = off + i * 2*Math.PI/n;
-      pts.push((cx + r*Math.cos(a)).toFixed(1) + ',' + (cy + r*Math.sin(a)).toFixed(1));
-    }
+  /* ---------- history ---------- */
+  function renderHistory(){
+    histEl.innerHTML = '';
+    if(!history.length){ histEl.innerHTML = '<span class="empty-note" style="padding:6px 0;">No picks yet — roll or draw!</span>'; return; }
+    history.forEach(h=>{
+      const c = document.createElement('span'); c.className='hist-chip';
+      c.innerHTML = '<b>'+esc(h.name)+'</b> · '+fmtTime(h.ts);
+      histEl.appendChild(c);
+    });
+  }
+  function fmtTime(ts){
+    const d = new Date(ts);
+    return d.toLocaleDateString([], {month:'short',day:'numeric'})+' '+d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+  }
+  $('clear-hist').onclick = () => { history=[]; saveAll(); renderHistory(); };
+
+  /* ---------- settings toggles ---------- */
+  const tNR=$('t-norepeat'), tSound=$('t-sound');
+  function syncToggles(){
+    tNR.classList.toggle('on', settings.norepeat);
+    tSound.classList.toggle('on', settings.sound);
+    tSound.lastChild.textContent = settings.sound ? ' Sound on' : ' Sound off';
+  }
+  tNR.onclick = () => { settings.norepeat=!settings.norepeat; syncToggles(); saveAll(); };
+  tSound.onclick = () => { settings.sound=!settings.sound; syncToggles(); saveAll(); };
+
+  /* ---------- data ---------- */
+  $('export-btn').onclick = () => {
+    const blob = new Blob([JSON.stringify({app:'olivias-activity-jar', version:2, acts, history, settings}, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'olivias-activity-jar.json'; a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  $('import-btn').onclick = () => $('file-in').click();
+  $('file-in').onchange = (e) => {
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const d = JSON.parse(r.result);
+        if (Array.isArray(d.acts)) {
+          acts = d.acts.map(x=>typeof x==='string'?{name:x,w:1}:(x&&x.name?{name:x.name,w:x.w===2?2:1}:null)).filter(Boolean);
+          if (Array.isArray(d.history)) history = d.history;
+          if (d.settings) settings = Object.assign(settings, d.settings);
+          saveAll(); applyTheme(); syncToggles(); render();
+          toastMsg.textContent = 'List imported!'; toastAct.style.display='none'; showToast(2500);
+        } else throw 0;
+      } catch(err){ toastMsg.textContent = "Couldn't read that file :("; toastAct.style.display='none'; showToast(2500); }
+      e.target.value='';
+    };
+    r.readAsText(f);
+  };
+  $('reset-btn').onclick = () => {
+    if(!confirm('Reset the list back to the starter activities?')) return;
+    acts = DEFAULTS.map(n=>({name:n,w:1})); saveAll(); render();
+  };
+
+  /* ---------- toast ---------- */
+  let toastTimer=null;
+  function showToast(ms){ clearTimeout(toastTimer); toast.classList.add('show'); toastTimer=setTimeout(hideToast, ms); }
+  function hideToast(){ toast.classList.remove('show'); }
+
+  /* ---------- dice ---------- */
+  function polyPoints(n,cx,cy,r){
+    const pts=[]; const off=-Math.PI/2;
+    for(let i=0;i<n;i++){ const a=off+i*2*Math.PI/n; pts.push((cx+r*Math.cos(a)).toFixed(1)+','+(cy+r*Math.sin(a)).toFixed(1)); }
     return pts.join(' ');
   }
   let diceFaces = 6;
   function updateDiceShape(){
     diceFaces = Math.max(6, acts.length);
-    diceShape.setAttribute('points', polyPoints(diceFaces, 50, 52, 44));
-    diceShape.setAttribute('fill', 'url(#dg)');
-    // inner facet ring for gem look
-    diceFacets.setAttribute('points', polyPoints(diceFaces, 50, 52, 33));
-    diceFace.setAttribute('points', polyPoints(diceFaces, 50, 52, 21));
-    diceNum.textContent = 'd' + diceFaces;
-    diceNum.setAttribute('font-size', String(diceFaces > 14 ? 15 : 17));
+    diceShape.setAttribute('points', polyPoints(diceFaces,50,52,44));
+    diceShape.setAttribute('fill','url(#dg)');
+    diceFacets.setAttribute('points', polyPoints(diceFaces,50,52,33));
+    diceFace.setAttribute('points', polyPoints(diceFaces,50,52,21));
+    diceNum.textContent = 'd'+diceFaces;
+    diceNum.setAttribute('font-size', String(diceFaces>14?15:17));
+  }
+
+  /* ---------- picking ---------- */
+  function weightedPick(){
+    const total = acts.reduce((s,a)=>s+a.w,0);
+    let r = Math.random()*total;
+    for(let i=0;i<acts.length;i++){ r -= acts[i].w; if(r<0) return i; }
+    return acts.length-1;
+  }
+  function pickIndex(){
+    let idx = weightedPick();
+    if(settings.norepeat && acts.length>1 && acts[idx].name===lastPick) idx = (idx+1)%acts.length;
+    return idx;
   }
 
   let rolling=false;
   async function roll(){
     if(rolling || acts.length<2) return;
-    rolling=true; rollBtn.disabled=true; dice.classList.add('rolling');
+    rolling=true; rollBtn.disabled=true; drawBtn.disabled=true; dice.classList.add('rolling');
     result.classList.remove('show'); result.innerHTML='<span class="sub" style="margin:0">Rolling…</span>';
-
     const DUR=1400; const t0=performance.now();
     await new Promise(res=>{
       (function tick(){
-        diceNum.textContent = 'd' + (1+Math.floor(Math.random()*diceFaces));
-        if(performance.now()-t0 < DUR) setTimeout(tick, 90);
-        else res();
+        diceNum.textContent = 'd'+(1+Math.floor(Math.random()*diceFaces));
+        if(performance.now()-t0<DUR) setTimeout(tick,90); else res();
       })();
     });
     dice.classList.remove('rolling');
+    finish(pickIndex());
+  }
+  async function drawSlip(){
+    if(rolling || acts.length<2) return;
+    rolling=true; rollBtn.disabled=true; drawBtn.disabled=true;
+    result.classList.remove('show'); result.innerHTML='<span class="sub" style="margin:0">Reaching into the jar…</span>';
+    await new Promise(r=>setTimeout(r,900));
+    finish(pickIndex());
+  }
 
-    const pickIdx = Math.floor(Math.random()*acts.length);
+  async function finish(pickIdx){
     const pick = acts[pickIdx];
-    diceNum.textContent = 'd' + (pickIdx+1);
-    const el = slipEls[pick];
-    if(el){ el.classList.add('drawn'); setTimeout(()=>{ el.classList.remove('drawn'); }, 2600); }
-    await new Promise(r=>setTimeout(r,300));
-
-    result.innerHTML = '<div><div class="big">' + esc(pick) + '</div><div class="tick">🎲 that\'s your activity — have fun!</div></div>';
+    diceNum.textContent = 'd'+(pickIdx+1);
+    const el = slipEls[pick.name];
+    if(el){ el.classList.add('winner'); await new Promise(r=>setTimeout(r,700)); }
+    lastPick = pick.name;
+    history.unshift({name:pick.name, ts:Date.now()});
+    history = history.slice(0,10);
+    result.innerHTML = '<div><div class="big">'+esc(pick.name)+'</div><div class="tick">🎲 that\'s your activity — have fun!</div></div>';
     result.classList.add('show');
-    confetti();
-    rollBtn.disabled=false; rolling=false;
+    ding(); confetti(); burst(); renderHistory();
+    rollBtn.disabled=false; drawBtn.disabled=false; rolling=false;
   }
 
   function confetti(){
-    const cols = PALETTE;
     for(let i=0;i<40;i++){
       const c=document.createElement('div'); c.className='confetti';
       c.style.left=Math.random()*100+'vw';
-      c.style.background=cols[Math.floor(Math.random()*cols.length)];
+      c.style.background=PALETTE[Math.floor(Math.random()*PALETTE.length)];
       c.style.borderRadius=Math.random()<.5?'50%':'2px';
       c.style.animationDuration=(1.6+Math.random()*1.6)+'s';
       c.style.animationDelay=(Math.random()*.4)+'s';
       document.body.appendChild(c);
       setTimeout(()=>c.remove(),3600);
+    }
+  }
+  function burst(){
+    const r = document.getElementById('jar-wrap').getBoundingClientRect();
+    const cx = r.left+r.width/2, cy = r.top+r.height*0.6;
+    for(let i=0;i<26;i++){
+      const p=document.createElement('div'); p.className='burst';
+      p.style.left=cx+'px'; p.style.top=cy+'px';
+      p.style.background=PALETTE[i%PALETTE.length];
+      const a=Math.random()*2*Math.PI, d=70+Math.random()*130;
+      p.style.setProperty('--dx',(Math.cos(a)*d).toFixed(0)+'px');
+      p.style.setProperty('--dy',(Math.sin(a)*d-40).toFixed(0)+'px');
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(),1000);
     }
   }
   function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
@@ -391,8 +608,10 @@
   input.addEventListener('keydown', e=>{ if(e.key==='Enter') addAct(); });
   dice.onclick = roll;
   rollBtn.onclick = roll;
+  drawBtn.onclick = drawSlip;
+  document.getElementById('jar-wrap').onclick = drawSlip;
 
-  render();
+  load(); loadMeta(); applyTheme(); syncToggles(); render();
 })();
 </script>
 </body>
