@@ -182,6 +182,19 @@
     animation:burst .9s cubic-bezier(.2,.8,.4,1) forwards; }
   @keyframes burst { 0%{transform:translate(0,0) scale(1); opacity:1} 100%{transform:translate(var(--dx),var(--dy)) scale(.3); opacity:0} }
 
+  /* ---------- celebration: jar opens, big slip ---------- */
+  #jar-wrap.open #lid { animation:lidpop .6s cubic-bezier(.3,1.4,.5,1) forwards; }
+  @keyframes lidpop { 0%{transform:translate(0,0) rotate(0); transform-origin:150px 50px} 60%{transform:translate(8px,-18px) rotate(-16deg); transform-origin:150px 50px} 100%{transform:translate(6px,-14px) rotate(-12deg); transform-origin:150px 50px} }
+  #jar-wrap.open #slips { animation:jarrattle .45s ease; }
+  @keyframes jarrattle { 25%{transform:translateY(-4px) rotate(-2deg)} 75%{transform:translateY(2px) rotate(1.5deg)} }
+  #bigslip { position:fixed; inset:0; z-index:55; display:none; align-items:center; justify-content:center; cursor:pointer; }
+  #bigslip.show { display:flex; }
+  #bigslip .paper { max-width:min(86vw,480px); text-align:center; padding:36px 44px; border-radius:18px;
+    font-family:'Baloo 2',sans-serif; font-weight:800; font-size:clamp(26px,6vw,40px); color:#3d2b56;
+    box-shadow:0 22px 60px rgba(61,43,86,.4); animation:bigslip-in .65s cubic-bezier(.34,1.56,.64,1) both; }
+  #bigslip .paper small { display:block; font-family:'Nunito',sans-serif; font-weight:700; font-size:14px; color:rgba(61,43,86,.65); margin-top:12px; }
+  @keyframes bigslip-in { 0%{transform:scale(.25) rotate(9deg); opacity:0} 60%{transform:scale(1.1) rotate(-4deg); opacity:1} 100%{transform:scale(1) rotate(-2deg); opacity:1} }
+
   footer { margin-top:36px; font-size:13px; color:var(--faint); text-align:center; }
   @media (max-width:900px){ .left{order:2} .right{order:1; width:100%; max-width:480px;} .theme-btn{position:static; margin-bottom:10px;} }
   @media (prefers-reduced-motion:reduce){ *,*::before,*::after{ animation-duration:.01s !important; transition-duration:.01s !important; } }
@@ -211,10 +224,12 @@
               <stop offset="1" stop-color="#e8f7fb" stop-opacity=".7"/>
             </linearGradient>
           </defs>
+          <g id="lid">
           <ellipse cx="150" cy="30" rx="26" ry="12" fill="#c98a3d"/>
           <ellipse cx="150" cy="26" rx="26" ry="10" fill="#e9a955"/>
           <rect x="78" y="42" width="144" height="26" rx="10" fill="#d99a45"/>
           <rect x="78" y="42" width="144" height="13" rx="6" fill="#eeb264"/>
+          </g>
           <path d="M70 72 Q60 80 58 100 L58 288 Q58 318 90 322 L210 322 Q242 318 242 288 L242 100 Q240 80 230 72 Z"
                 fill="url(#glass)" stroke="#a9d6e2" stroke-width="3"/>
           <path class="glass-shine" d="M84 90 Q78 100 77 120 L77 270" stroke="rgba(255,255,255,.8)" stroke-width="7" stroke-linecap="round" fill="none"/>
@@ -281,6 +296,8 @@
   </div>
 
 </div>
+
+<div id="bigslip"><div class="paper" id="bigslip-paper"></div></div>
 
 <div id="toast"><span id="toast-msg"></span><button id="toast-act" style="display:none;">Undo</button></div>
 
@@ -581,9 +598,30 @@
     history = history.slice(0,10);
     result.innerHTML = '<div><div class="big">'+esc(pick.name)+'</div><div class="tick">🎲 that\'s your activity — have fun!</div></div>';
     result.classList.add('show');
+    // jar opens, slip enlarges, confetti falls
+    document.getElementById('jar-wrap').classList.add('open');
+    await new Promise(r=>setTimeout(r,250));
+    showBigSlip(pick.name, colorFor(pickIdx));
     ding(); confetti(); burst(); renderHistory();
     rollBtn.disabled=false; drawBtn.disabled=false; rolling=false;
   }
+
+  const bigslip = document.getElementById('bigslip');
+  const bigslipPaper = document.getElementById('bigslip-paper');
+  let bsTimer = null;
+  function showBigSlip(name, color){
+    bigslipPaper.style.background = color;
+    bigslipPaper.innerHTML = esc(name) + '<small>tap anywhere when you\'re ready</small>';
+    bigslip.classList.add('show');
+    clearTimeout(bsTimer);
+    bsTimer = setTimeout(hideBigSlip, 7000);
+  }
+  function hideBigSlip(){
+    clearTimeout(bsTimer);
+    bigslip.classList.remove('show');
+    document.getElementById('jar-wrap').classList.remove('open');
+  }
+  bigslip.onclick = hideBigSlip;
 
   function confetti(){
     for(let i=0;i<40;i++){
