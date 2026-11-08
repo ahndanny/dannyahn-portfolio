@@ -52,6 +52,17 @@
     transition: opacity 0.35s ease, transform 0.35s ease; font-family: 'Shippori Mincho', serif;
   }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #vignette { position: fixed; inset: 0; z-index: 4; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 46%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.42) 100%); }
+  .lb { position: fixed; left: 0; right: 0; height: 6.2vh; background: #000; z-index: 6;
+    pointer-events: none; opacity: 0; transition: opacity 1.6s ease; }
+  #lbT { top: 0; } #lbB { bottom: 0; }
+  #titleCard { position: fixed; inset: 0; z-index: 7; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; pointer-events: none; transition: opacity 2.4s ease; }
+  #titleCard .jp { font-family: 'Shippori Mincho', serif; font-size: 46px; font-weight: 700;
+    color: #f4e9d2; letter-spacing: 14px; text-indent: 14px; text-shadow: 0 0 34px rgba(255,190,110,0.55); }
+  #titleCard .en { margin-top: 14px; font-size: 11px; font-weight: 300; letter-spacing: 5px;
+    text-transform: uppercase; color: rgba(244,233,210,0.65); }
 </style>
 </head>
 <body>
@@ -63,10 +74,14 @@
   <div class="ctl-label"><span>Time of Day</span><span id="todVal">Day</span></div>
   <input type="range" id="todSlider" min="0" max="100" value="0">
   <button id="gustBtn">Wind Gust</button>
-  <div class="hint">Drag to orbit &middot; scroll to zoom &middot; right-drag to pan<br>Click the torii gate, lanterns, door or the water</div>
+  <div class="hint">Drag to orbit &middot; scroll to zoom &middot; right-drag to pan<br>Click the torii, shrine bell, lanterns, door or water<br>Keys: 1/2/3 = time of day &middot; G = gust</div>
 </div>
 <div id="fps"></div>
 <div id="toast"></div>
+<div id="vignette"></div>
+<div class="lb" id="lbT"></div>
+<div class="lb" id="lbB"></div>
+<div id="titleCard"><div class="jp">静寂の庭</div><div class="en">The Garden of Stillness</div></div>
 
 <script>
 (function () {
@@ -99,6 +114,9 @@
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+  renderer.outputEncoding = THREE.sRGBEncoding;
   document.getElementById('scene').appendChild(renderer.domElement);
 
   var camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 320);
@@ -136,7 +154,7 @@
   /* ============================================================
      PHASE 2 — ASSET GENERATION
      ============================================================ */
-  var vGrass = [], vStone = [], vDark = [], vWall = [], vRoof = [], vSakura = [], vTrunk = [], vBridge = [], vFence = [];
+  var vGrass = [], vStone = [], vDark = [], vWall = [], vRoof = [], vSakura = [], vTrunk = [], vBridge = [], vFence = [], vLily = [];
   var vTorii = [], vLantern = [];
 
   function pick(arr) { return arr[(Math.random() * arr.length) | 0]; }
@@ -277,6 +295,18 @@
   }
   buildTorii();
 
+  // ---- Mountain shrine (back-left ridge) with clickable bell ----
+  (function(){
+    var mx = -13, mz = -14;
+    for (var my = 0.5; my <= 3.2; my += 0.75)
+      for (var ax = -2; ax <= 2; ax++) for (var az = -2; az <= 2; az++)
+        if (Math.abs(ax)+Math.abs(az) <= 3) pushV(vStone, mx+ax, my, mz+az, jitterColor(0x6f6f67, 0.06), 0.95);
+    // mini torii on top
+    [-1.4, 1.4].forEach(function(off){ for (var h = 0; h < 2.2; h += 0.7) pushV(vTorii, mx, 3.6 + h, mz + off, jitterColor(COL.red, 0.05), 0.85); });
+    for (var z = -1.8; z <= 1.8; z++) pushV(vTorii, mx, 5.9, mz + z, jitterColor(COL.red, 0.04), 0.9);
+    // bell hangs under the lintel (added as real mesh so it is clickable)
+  })();
+
   // ---- Bridge ----
   function buildBridge() {
     for (var x = 4; x <= 14; x += 0.9) {
@@ -364,6 +394,16 @@
     pushV(vStone, POND.cx + Math.cos(a) * rr, 0.3, POND.cz + Math.sin(a) * rr, COL.stone, 0.7);
   }
 
+  // Lily pads + flowers (float just above the water surface)
+  [[7.0,-2.4],[11.4,2.2],[8.2,3.4],[12.3,-1.8],[6.4,1.2],[12.6,2.9],[7.8,4.3]].forEach(function(lp){
+    var ang = Math.random()*Math.PI*2;
+    for (var la = 0; la < Math.PI*2; la += 0.5) {
+      if (la > 0.6 && la < 1.1) continue;
+      pushV(vLily, lp[0] + Math.cos(la+ang)*0.42, 0.52, lp[1] + Math.sin(la+ang)*0.42, jitterColor(0x2f5c28, 0.05), 0.5);
+    }
+    if (Math.random() < 0.6) pushV(vLily, lp[0]+0.1, 0.58, lp[1]-0.1, 0xfbb6da, 0.3);
+  });
+
   // ---- Koi (animated, seen through the water) ----
   var koiMats = [
     new THREE.MeshStandardMaterial({ color: 0xf07030, roughness: 0.5, emissive: 0x3a1200 }),
@@ -407,6 +447,14 @@
   );
   moon.position.set(-52, 38, -60);
   scene.add(moon);
+
+  var caustic = new THREE.Mesh(
+    new THREE.PlaneGeometry(POND.r * 2.1, POND.r * 2.1, 1, 1),
+    new THREE.MeshBasicMaterial({ color: 0xbfe4ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false })
+  );
+  caustic.rotation.x = -Math.PI / 2;
+  caustic.position.set(POND.cx, POND.waterY - 0.02, POND.cz);
+  scene.add(caustic);
 
   // ---- Fireflies (night only) ----
   var flyBase = [];
@@ -452,6 +500,7 @@
   bake(vTrunk, matStd(), true, true);
   bake(vBridge, matStd(), true, true);
   bake(vFence, matStd(), true, true);
+  bake(vLily, matStd(), false, true);
   var toriiMesh = bake(vTorii, new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.15, emissive: 0x000000 }), true, true);
   var lanternMat = new THREE.MeshPhongMaterial({ color: 0x8a5a20, emissive: 0xffb85c, emissiveIntensity: 0, shininess: 30 });
   var lanternMesh = bake(vLantern, lanternMat, false, true);
@@ -511,7 +560,7 @@
   renderer.domElement.addEventListener('pointerdown', touchIdle);
   renderer.domElement.addEventListener('wheel', touchIdle);
 
-  var nightTarget = 0, night = 0;
+  var nightTarget = 0, night = 0, bellFlash = 0;
   var todSlider = document.getElementById('todSlider');
   var todVal = document.getElementById('todVal');
   todSlider.addEventListener('input', function () {
@@ -540,7 +589,13 @@
   var mouse = new THREE.Vector2();
   var toriiFlash = 0, doorFlash = 0, lanternPulse = 0;
   var doorObj = scene.getObjectByName('door');
-  var clickables = [toriiMesh, lanternMesh, water, doorObj];
+  var bellMat = new THREE.MeshStandardMaterial({ color: 0xcaa64f, roughness: 0.35, metalness: 0.5, emissive: 0x000000 });
+  var bellObj = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.75, 0.45), bellMat);
+  bellObj.position.set(-13, 5.15, -14);
+  bellObj.castShadow = true; bellObj.name = 'bell';
+  scene.add(bellObj);
+
+  var clickables = [toriiMesh, lanternMesh, water, doorObj, bellObj];
 
   var downPos = null;
   renderer.domElement.addEventListener('pointerdown', function (e) { downPos = [e.clientX, e.clientY]; });
@@ -557,6 +612,7 @@
     else if (obj === lanternMesh) { lanternPulse = 1; showToast('The lanterns flicker to life'); }
     else if (obj === doorObj) { doorFlash = 1; lanternPulse = 1; showToast('The pagoda door hums with quiet energy'); }
     else if (obj === water) addRipple(hits[0].point.x - POND.cx, hits[0].point.z - POND.cz);
+    else if (obj === bellObj) { bellFlash = 1; showToast('The shrine bell rings - bon...'); }
   });
 
   var ripples = [{ x: 0, z: 0, t: 0, amp: 0.09 }, { x: -2.5, z: 1.8, t: 3.1, amp: 0.07 }, { x: 2.2, z: -2.0, t: 6.4, amp: 0.07 }];
@@ -595,6 +651,11 @@
   var pm = new THREE.Matrix4(), pq = new THREE.Quaternion(), pe = new THREE.Euler(), pv = new THREE.Vector3(1, 1, 1);
   var pv1 = new THREE.Vector3();
   var fpsEl = document.getElementById('fps'), fpsFrames = 0, fpsTimer = 0;
+  var flight = { t: 0, dur: 7, from: new THREE.Vector3(36, 42, 32), to: new THREE.Vector3(19, 10.5, 16), done: false };
+  var titleCard = document.getElementById('titleCard'), lbT = document.getElementById('lbT'), lbB = document.getElementById('lbB');
+  function easeIO(k) { return k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; }
+  setTimeout(function () { titleCard.style.opacity = 0; lbT.style.opacity = 0.92; lbB.style.opacity = 0.92; flight.t = 0.001; }, 500);
+  setTimeout(function () { lbT.style.opacity = 0; lbB.style.opacity = 0; }, 11500);
 
   function animate() {
     requestAnimationFrame(animate);
@@ -612,7 +673,8 @@
     hemi.color.lerpColors(hemiSkyDay, hemiSkyNight, n2);
     hemi.groundColor.lerpColors(hemiGndDay, hemiGndNight, n2);
     starMat.opacity = Math.max(0, n2 - 0.25) * 1.1;
-    moon.material.emissiveIntensity = n2 * 2.6;
+    moon.material.emissiveIntensity = n2 * (2.3 + 0.5 * (Math.sin(time * 0.7) * 0.5 + 0.5));
+    caustic.material.opacity = n2 * (0.05 + 0.05 * (Math.sin(time * 1.1) * 0.5 + 0.5));
     moon.material.opacity = Math.max(0, n2 - 0.1);
     flyMat.opacity = Math.max(0, n2 - 0.3) * 0.95;
     bloomPass.strength = 0.42 + n2 * 0.45;
@@ -629,6 +691,7 @@
       doorFlash = Math.max(0, doorFlash - dt * 0.9);
       doorObj.material.emissive.setRGB(doorFlash * 0.9, doorFlash * 0.22, doorFlash * 0.13);
     }
+    if (bellFlash > 0) { bellFlash = Math.max(0, bellFlash - dt * 0.8); bellMat.emissive.setRGB(bellFlash, bellFlash * 0.75, bellFlash * 0.25); }
     petalMat.emissiveIntensity = n2 * 0.5;
 
     ripples.forEach(function (rp) { rp.t += dt; });
@@ -672,6 +735,12 @@
     }
     petals.instanceMatrix.needsUpdate = true;
 
+    if (flight.t > 0 && flight.t < 1) {
+      flight.t = Math.min(1, flight.t + dt / flight.dur);
+      camera.position.lerpVectors(flight.from, flight.to, easeIO(flight.t));
+      if (flight.t >= 1) flight.done = true;
+    }
+
     controls.update();
     composer.render();
 
@@ -681,6 +750,15 @@
       fpsFrames = 0; fpsTimer = 0;
     }
   }
+
+  // Keyboard: 1/2/3 = day/dusk/night, G = gust
+  window.addEventListener('keydown', function (e) {
+    if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    if (e.key === '1' || e.key === '2' || e.key === '3') {
+      todSlider.value = (Number(e.key) - 1) * 50;
+      todSlider.dispatchEvent(new Event('input'));
+    } else if (e.key === 'g' || e.key === 'G') gustBtn.click();
+  });
 
   window.addEventListener('resize', function () {
     camera.aspect = window.innerWidth / window.innerHeight;
