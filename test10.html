@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="NEON://DESCENT - a raymarched cyberpunk megacity running live on your GPU. Scroll to thrust, move to look, click to pulse.">
+<meta name="theme-color" content="#04030a">
+<title>NEON://DESCENT</title>
+<style>
+  :root{ --cy:#35e6ff; --mg:#ff2b7a; --am:#ffb347; --bg:#04030a; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);overflow:hidden}
+  body{font-family:ui-monospace,"Cascadia Mono","JetBrains Mono",Menlo,Consolas,monospace;color:#cfd6e4}
+  canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+  .hud{position:fixed;inset:0;pointer-events:none;z-index:5}
+  .corner{position:absolute;width:34px;height:34px;border:2px solid rgba(53,230,255,.5)}
+  .corner.tl{top:14px;left:14px;border-right:none;border-bottom:none}
+  .corner.tr{top:14px;right:14px;border-left:none;border-bottom:none}
+  .corner.bl{bottom:14px;left:14px;border-right:none;border-top:none}
+  .corner.br{bottom:14px;right:14px;border-left:none;border-top:none}
+  .tag{position:absolute;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(207,214,228,.75);text-shadow:0 0 12px rgba(53,230,255,.35);background:linear-gradient(rgba(4,3,10,.78),rgba(4,3,10,.78));padding:.5em .8em;border-left:2px solid rgba(53,230,255,.45);line-height:1.9}
+  .tag.tl{top:22px;left:58px}
+  .tag.tr{top:22px;right:58px;text-align:right;color:var(--mg);text-shadow:0 0 12px rgba(255,43,122,.5)}
+  .tag.bl{bottom:22px;left:58px}
+  .tag.br{bottom:22px;right:58px;text-align:right}
+  .tag .cy{color:var(--cy)} .tag .am{color:var(--am)}
+  .blink{animation:blink 1.4s steps(2,start) infinite}
+  @keyframes blink{50%{opacity:.25}}
+  .hintbar{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);font-size:10px;letter-spacing:.3em;color:rgba(207,214,228,.6);white-space:nowrap;text-transform:uppercase;background:rgba(4,3,10,.78);padding:.5em 1.2em}
+  .hintbar b{color:var(--cy);font-weight:400}
+  #audioBtn{position:absolute;top:52px;right:58px;pointer-events:auto;background:rgba(4,3,10,.78);border:1px solid rgba(255,43,122,.5);color:var(--mg);font:inherit;font-size:10px;letter-spacing:.25em;padding:.45em 1em;cursor:pointer;text-transform:uppercase;transition:all .2s}
+  #audioBtn:hover{background:rgba(255,43,122,.12);box-shadow:0 0 18px rgba(255,43,122,.35)}
+  #audioBtn.on{border-color:var(--cy);color:var(--cy);box-shadow:0 0 18px rgba(53,230,255,.3)}
+  #boot{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;justify-content:flex-start;align-items:center;padding:0 8vw;transition:opacity 1.1s ease}
+  #boot.gone{opacity:0;pointer-events:none}
+  #bootlines{font-size:clamp(11px,1.5vw,15px);line-height:2.1;letter-spacing:.12em;color:#9fe8ff;min-height:12em}
+  #bootlines .ok{color:#76ffb0}
+  #bootlines .warn{color:var(--mg)}
+  #bootlines .cursor{display:inline-block;width:.6em;background:var(--cy);animation:blink .8s steps(2,start) infinite}
+  #bigkanji{position:absolute;right:9vw;top:50%;transform:translateY(-50%);font-size:min(46vh,34vw);color:rgba(255,43,122,.07);user-select:none;line-height:1}
+  @media (max-width:640px){ .tag{font-size:9px} .hintbar{display:none} #bigkanji{opacity:.5} }
+</style>
+</head>
+<body>
+<canvas id="gl" role="img" aria-label="A live raytraced cyberpunk megacity at night: endless neon towers with scrolling holo billboards in volumetric haze, rain, lightning, wet street reflections, and hovercar light trails. Your mouse steers the camera, the scroll wheel thrusts forward, and clicking sends an electromagnetic pulse glitch."></canvas>
+<noscript><p style="padding:3rem;text-align:center;color:#9fe8ff">This city is rendered live by your GPU and needs JavaScript enabled.</p></noscript>
+
+<div class="hud" aria-hidden="true">
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="tag tl">NEON<span class="cy">://</span>DESCENT &nbsp;NIGHT CITY GRID <span class="blink">&#9646;</span></div>
+  <div class="tag tr">SECTOR <span id="sector">11</span>-<span id="ward">KABUKI</span><br><span class="am">RAIN 87% // THUNDER ROLLING</span></div>
+  <div class="tag bl">VEC <span id="coords">0.00 / 0.00</span><br>SPD <span id="spd">4.0</span> M/S</div>
+  <div class="tag br">SYS<span class="cy">://</span>LINK <span style="color:#76ffb0">STABLE</span><br><span id="fps">--</span> FPS // RENDER <span id="res">--</span></div>
+  <div class="hintbar"><b>MOUSE</b> LOOK &nbsp;&middot;&nbsp; <b>SCROLL</b> THRUST &nbsp;&middot;&nbsp; <b>CLICK</b> EMP &nbsp;&middot;&nbsp; <b>F</b> FULLSCREEN</div>
+  <button id="audioBtn" aria-pressed="false">AUDIO: OFFLINE</button>
+</div>
+
+<div id="boot"><div id="bigkanji">&#22812;</div><div id="bootlines"></div></div>
+
+<script>
+(function(){
+"use strict";
+var canvas = document.getElementById("gl");
+var gl = canvas.getContext("webgl", {antialias:false, alpha:false, depth:false, stencil:false,
+  powerPreference:"high-performance", preserveDrawingBuffer:true})
+  || canvas.getContext("experimental-webgl");
+if(!gl){ document.getElementById("boot").innerHTML = "<div style='color:#ff2b7a;letter-spacing:.2em'>GPU CONTEXT REFUSED - THIS CITY NEEDS WEBGL.</div>"; return; }
+
+var QUAD_VS =
+"attribute vec2 aPos;\n"
++"varying vec2 vUv;\n"
++"void main(){ vUv = aPos*0.5+0.5; gl_Position = vec4(aPos,0.0,1.0); }\n";
+
+var SCENE_FS = ""
++"precision highp float;\n"
++"uniform vec2 uRes; uniform float uTime; uniform float uYaw; uniform float uPitch;\n"
++"uniform float uZ; uniform float uSway; uniform float uEmp;\n"
++"#define CELL 14.0\n"
++"#define FAR 240.0\n"
++"#define STEPS 88\n"
++"float hash11(float p){ p=fract(p*0.1031); p*=p+33.33; p*=p+p; return fract(p); }\n"
++"float hash12(vec2 p){ vec3 p3=fract(vec3(p.xyx)*0.1031); p3+=dot(p3,p3.yzx+33.33); return fract((p3.x+p3.y)*p3.z); }\n"
++"float hash21(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }\n"
++"mat2 rot(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }\n"
++"float sdBox(vec3 p, vec3 b){ vec3 q=abs(p)-b; return length(max(q,0.0))+min(max(q.x,max(q.y,q.z)),0.0); }\n"
++"float fbm(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<3;i++){ v+=a*hash12(p); p=p*2.07+1.3; a*=0.5;} return v; }\n"
++"void cellInfo(vec2 id, out float bh, out float wx, out float wz, out float ph, out vec2 off, out float seed){\n"
++"  float a = hash12(id+1.7), b = hash12(id+5.3), r = hash12(id+9.7);\n"
++"  float w1 = 3.2 + 1.9*a, w2 = w1*(0.55+0.5*b);\n"
++"  wx = mix(w1,w2,r); wz = mix(w2,w1,r);\n"
++"  bh = 14.0 + 86.0*pow(hash12(id+2.3), 2.0);\n"
++"  ph = 3.5 + 7.5*hash12(id+11.9);\n"
++"  float mo = 7.0 - max(wx,wz) - 1.7;\n"
++"  off = (vec2(hash12(id+3.1), hash12(id+4.7)) - 0.5) * 2.0 * max(mo,0.0);\n"
++"  seed = hash12(id+5.9);\n"
++"}\n"
++"vec3 neonHue(vec2 id){ float k=hash12(id+17.3);\n"
++"  return k<0.30 ? vec3(1.0,0.15,0.42) : k<0.55 ? vec3(0.20,0.78,1.0) : k<0.72 ? vec3(1.0,0.55,0.15) : k<0.87 ? vec3(0.62,0.28,1.0) : vec3(0.25,1.0,0.68); }\n"
++"float mapB(vec3 p, out vec2 oId, out float oBh, out float oSeed){\n"
++"  vec2 id = floor(p.xz/CELL);\n"
++"  float bh,wx,wz,ph,seed; vec2 off; cellInfo(id,bh,wx,wz,ph,off,seed);\n"
++"  vec2 ctr = id*CELL + CELL*0.5 + off;\n"
++"  vec3 q = vec3(p.x-ctr.x, p.y, p.z-ctr.y);\n"
++"  float d = sdBox(q - vec3(0.0,bh*0.5,0.0), vec3(wx, bh*0.5+0.5, wz));\n"
++"  if(hash12(id+23.7) > 0.45){\n"
++"    float ch = ph*0.5;\n"
++"    d = min(d, sdBox(q - vec3(0.0, bh+ch, 0.0), vec3(wx*0.62, ch, wz*0.62)));\n"
++"  }\n"
++"  float pod = 3.0+2.5*hash12(id+29.3);\n"
++"  d = min(d, sdBox(q - vec3(0.0, pod*0.5, 0.0), vec3(min(wx+1.6,6.4), pod*0.5, min(wz+1.6,6.4))));\n"
++"  if(bh > 66.0) d = min(d, sdBox(q - vec3(0.0, bh+ph*0.5+5.0, 0.0), vec3(0.12,5.0,0.12)));\n"
++"  oId=id; oBh=bh; oSeed=seed; return d;\n"
++"}\n"
++"float map(vec3 p){ vec2 id; float bh,s; float d=mapB(p,id,bh,s); return min(d,p.y); }\n"
++"float empMul(){ return mix(1.0, 0.10 + 0.90*step(0.55, hash11(floor(uTime*23.0))), uEmp); }\n"
++"float flashVal(){\n"
++"  float gate = hash11(floor(uTime*0.09));\n"
++"  if(gate < 0.86) return 0.0;\n"
++"  float lt = fract(uTime*0.09)*14.3;\n"
++"  return max(0.0, sin(lt*18.0)*exp(-lt*1.2)) * (0.6+0.4*step(0.5, hash11(floor(uTime*3.7))));\n"
++"}\n"
++"vec3 windowsAt(vec2 id, float bh, float seed, float hh, float yy, float empMul){\n"
++"  if(yy<0.6 || yy>bh-0.5) return vec3(0.0);\n"
++"  vec2 cell = vec2(floor(hh/1.7), floor(yy/2.3));\n"
++"  vec2 f = vec2(fract(hh/1.7), fract(yy/2.3));\n"
++"  float pane = step(0.16,f.x)*step(f.x,0.84)*step(0.14,f.y)*step(f.y,0.86);\n"
++"  if(pane<0.5) return vec3(0.0);\n"
++"  float lr = hash12(cell + id*13.7 + seed*31.0);\n"
++"  float bias = 0.46 + 0.34*clamp(yy/max(bh,1.0),0.0,1.0);\n"
++"  if(lr < bias) return vec3(0.0);\n"
++"  float blinkv = (fract(lr*13.7)>0.965) ? (0.55+0.45*step(0.5,fract(uTime*3.0+lr*11.0))) : 1.0;\n"
++"  float cs = hash12(cell+7.31);\n"
++"  vec3 c = cs<0.55 ? mix(vec3(1.0,0.70,0.34), vec3(1.0,0.88,0.60), fract(cs*7.0))\n"
++"         : cs<0.78 ? vec3(0.35,0.85,1.0) : cs<0.92 ? vec3(1.0,0.25,0.55) : vec3(0.62,1.0,0.72);\n"
++"  return c*blinkv*empMul*(0.55+0.65*clamp((hh - floor(hh/1.7)*1.7)/1.7,0.0,1.0));\n"
++"}\n"
++"vec3 billboard(vec3 p, vec2 id, float bh, float seed, vec3 n){\n"
++"  if(seed < 0.62 || bh < 26.0) return vec3(0.0);\n"
++"  float b2,wx2,wz2,ph2,s2; vec2 coff; cellInfo(id,b2,wx2,wz2,ph2,coff,s2);\n"
++"  vec2 ctr = id*CELL + CELL*0.5 + coff;\n"
++"  bool ax = abs(n.x) > 0.5;\n"
++"  float cu = ax ? p.z : p.x;\n"
++"  float cc = ax ? ctr.y : ctr.x;\n"
++"  float hw = min(2.1, (ax ? wz2 : wx2)*0.85);\n"
++"  float u = (cu - cc)/hw;\n"
++"  if(abs(u) > 0.94) return vec3(0.0);\n"
++"  float y0 = 8.0 + bh*0.35 + fract(seed*19.0)*(bh*0.4);\n"
++"  float hh2 = 4.5 + 5.0*fract(seed*29.0);\n"
++"  float v = (p.y - y0)/hh2;\n"
++"  if(v < 0.0 || v > 1.0) return vec3(0.0);\n"
++"  float edge = smoothstep(0.94,0.80,abs(u))*smoothstep(0.0,0.07,v)*smoothstep(1.0,0.93,v);\n"
++"  vec2 sc = vec2(7.0, 13.0);\n"
++"  vec2 gi = vec2(floor(u*sc.x), floor(v*sc.y - uTime*(1.2+2.2*fract(seed*5.0))*sign(sin(seed*8.0))));\n"
++"  float g = hash12(gi + id*17.0 + seed*90.0);\n"
++"  vec3 col = neonHue(id + floor(seed*40.0));\n"
++"  vec3 acc = col * step(0.48, g) * (0.75 + 0.25*sin(uTime*3.0 + g*40.0));\n"
++"  acc += col*0.35*step(0.75, fract(v*9.0 - uTime*0.6));\n"
++"  acc *= edge * (0.85 + 0.15*step(0.985, fract(uTime*9.0 + seed*40.0)));\n"
++"  return acc*empMul()*1.3;\n"
++"}\n"
++"vec3 emisAt(vec3 p){\n"
++"  vec2 id=floor(p.xz/CELL); float bh,wx,wz,ph,seed; vec2 off; cellInfo(id,bh,wx,wz,ph,off,seed);\n"
++"  if(p.y > bh+4.0) return vec3(0.0);\n"
++"  vec2 ctr = id*CELL + CELL*0.5 + off;\n"
++"  vec2 lr2 = abs(p.xz-ctr);\n"
++"  float hh = lr2.x>lr2.y ? p.x : p.z;\n"
++"  vec3 acc = windowsAt(id,bh,seed,hh,p.y,empMul())*0.55;\n"
++"  if(p.y>1.1 && p.y<2.4) acc += neonHue(id)*0.65;\n"
++"  float k=hash12(id+40.1);\n"
++"  if(k>0.75 && p.y>5.5 && p.y<13.5) acc += neonHue(id+3.3)*(0.55+0.45*sin(uTime*17.0+k*90.0))*0.6;\n"
++"  return acc;\n"
++"}\n"
++"vec3 surfEmis(vec3 p, vec3 n){\n"
++"  vec2 id; float bh,seed; mapB(p,id,bh,seed);\n"
++"  float hh = abs(n.x)>0.5 ? p.z : p.x;\n"
++"  vec3 acc = windowsAt(id,bh,seed,hh,p.y,empMul());\n"
++"  float cbh,cwx,cwz,cph,cseed; vec2 coff; cellInfo(id,cbh,cwx,cwz,cph,coff,cseed);\n"
++"  vec2 ctr = id*CELL + CELL*0.5 + coff;\n"
++"  float ex = abs(abs(p.x-ctr.x)-cwx), ez = abs(abs(p.z-ctr.y)-cwz);\n"
++"  float edge = smoothstep(0.16,0.02,max(ex,ez));\n"
++"  if(hash12(id+33.3)>0.62 && p.y>1.0) acc += neonHue(id+11.7)*edge*0.8;\n"
++"  if(n.y>0.7){ float rim = smoothstep(0.5,0.0,min(ex,ez)); acc += neonHue(id+7.1)*rim*0.5; }\n"
++"  acc += billboard(p,id,bh,seed,n);\n"
++"  if(p.y>1.1 && p.y<2.4) acc += neonHue(id)*0.7;\n"
++"  float k=hash12(id+40.1);\n"
++"  if(k>0.75 && p.y>5.5 && p.y<13.5) acc += neonHue(id+3.3)*(0.6+0.4*step(0.35,fract(sin(floor(uTime*15.0))*43758.5453)))*1.8;\n"
++"  if(bh>66.0 && p.y>bh+5.0 && p.y<bh+7.0) acc += vec3(1.0,0.12,0.1)*(0.5+0.5*sin(uTime*3.0+id.x*2.1))*2.0;\n"
++"  return acc;\n"
++"}\n"
++"vec3 carsAt(vec3 p){\n"
++"  vec3 acc = vec3(0.0);\n"
++"  for(int i=0;i<7;i++){\n"
++"    float fi=float(i);\n"
++"    float lane = -9.0 + fi*3.0 + 3.5*hash11(fi*7.1);\n"
++"    float yy = 20.0 + 15.0*fi + hash11(fi*3.3)*6.0;\n"
++"    float sp = (hash11(fi*1.7)>0.5 ? 26.0 : -22.0);\n"
++"    float per = 170.0;\n"
++"    float cz = mod(uZ + uTime*sp + fi*61.0, per);\n"
++"    float dz = p.z - cz;\n"
++"    if(abs(p.x-lane)<7.0 && abs(p.y-yy)<3.0 && dz>-18.0 && dz<3.0){\n"
++"      float d2 = (p.x-lane)*(p.x-lane)+(p.y-yy)*(p.y-yy)+dz*dz*0.02;\n"
++"      vec3 col = sp>0.0 ? vec3(1.0,0.18,0.25) : vec3(0.25,0.85,1.0);\n"
++"      acc += col * (1.0/(1.0+d2*0.9)) * (dz<0.0 ? 0.55 : 1.4);\n"
++"    }\n"
++"  }\n"
++"  return acc;\n"
++"}\n"
++"vec3 skyCol(vec3 rd){\n"
++"  float h = clamp(rd.y*0.5+0.5, 0.0, 1.0);\n"
++"  vec3 c = mix(vec3(0.052,0.030,0.048), vec3(0.004,0.007,0.020), pow(h,0.8));\n"
++"  c += vec3(0.11,0.055,0.028)*pow(1.0-abs(rd.y),9.0)*1.35;\n"
++"  c += vec3(0.035,0.015,0.06)*pow(1.0-abs(rd.y),5.0)*max(0.0,-rd.z)*0.8;\n"
++"  float fl = flashVal();\n"
++"  c += vec3(0.55,0.60,0.90)*fl*0.65*pow(1.0-abs(rd.y)*0.55,2.0);\n"
++"  if(rd.y>0.15){ vec2 g=floor(rd.xy*160.0); float s=hash21(g);\n"
++"    c += vec3(0.5,0.55,0.7)*step(0.9965,s)*clamp(rd.y,0.0,1.0)*0.5; }\n"
++"  return c;\n"
++"}\n"
++"float trace(vec3 ro, vec3 rd, out vec3 hitP, out vec3 hitN, out float hitMat, out vec3 glow){\n"
++"  float t=0.0; hitMat=-1.0; glow=vec3(0.0);\n"
++"  for(int i=0;i<STEPS;i++){\n"
++"    vec3 p=ro+rd*t; float d=map(p);\n"
++"    glow += emisAt(p)*min(d,2.0)*0.010*exp(-t*0.012);\n"
++"      glow += carsAt(p)*min(d,2.0)*0.006*exp(-t*0.05);\n"
++"      glow = min(glow, vec3(0.55));\n"
++"    if(d<0.0015*t+0.0009){\n"
++"      hitP=p;\n"
++"      vec2 e=vec2(0.0015,0.0);\n"
++"      hitN=normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx)));\n"
++"      hitMat = (p.y < 0.05) ? 1.0 : 0.0;\n"
++"      return t;\n"
++"    }\n"
++"    t += d*0.94;\n"
++"    if(t>FAR) break;\n"
++"  }\n"
++"  return -1.0;\n"
++"}\n"
++"vec3 traceEmit(vec3 ro, vec3 rd){\n"
++"  vec3 acc=vec3(0.0); float t=0.02;\n"
++"  for(int i=0;i<34;i++){\n"
++"    vec3 p=ro+rd*t; float d=map(p);\n"
++"    if(d<0.02){ acc += surfEmis(p,vec3(0.0,0.0,1.0)); break; }\n"
++"    acc += emisAt(p)*min(d,2.0)*0.010;\n"
++"    t += max(d*1.2, 0.35);\n"
++"    if(t>160.0) break;\n"
++"  }\n"
++"  acc *= exp(-t*0.0075);\n"
++"  return acc;\n"
++"}\n"
++"vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14), 0.0, 1.0); }\n"
++"float rainStreak(vec2 v){ float acc=0.0;\n"
++"  for(int i=0;i<2;i++){\n"
++"    float fi=float(i);\n"
++"    float sc=40.0+fi*58.0;\n"
++"    float cx=floor((v.x+v.y*0.10)*sc);\n"
++"    float s=hash12(vec2(cx,fi*7.31));\n"
++"    if(s>0.87){\n"
++"      float x0=(cx+0.25+0.5*fract(s*31.0))/sc - v.y*0.10;\n"
++"      float speed=1.3+1.5*fract(s*17.0)+fi*0.9;\n"
++"      float y=fract(v.y*(0.30+0.18*fi)+uTime*speed+s*10.0);\n"
++"      float w=(0.0038+0.0045*fract(s*9.0))*(1.0+fi*0.8);\n"
++"      float line=smoothstep(w,0.0,abs(v.x-x0));\n"
++"      float tail=smoothstep(0.0,0.12,y)*smoothstep(0.45,0.16,y);\n"
++"      acc+=line*tail*(1.0-0.35*fi);\n"
++"    }\n"
++"  }\n"
++"  return acc; }\n"
++"void main(){\n"
++"  vec2 uv = (gl_FragCoord.xy - 0.5*uRes)/uRes.y;\n"
++"  uv = rot(0.012*sin(uTime*0.11))*uv;\n"
++"  mat2 ry = rot(uYaw); mat2 rx = rot(uPitch);\n"
++"  vec3 ro = vec3(uSway, 3.0 + 0.5*sin(uTime*0.21), uZ);\n"
++"  vec3 rd = normalize(vec3(uv*1.05, -1.7));\n"
++"  rd.yz = rx*rd.yz; rd.xz = ry*rd.xz;\n"
++"  vec3 hp,hn,glow; float hmat;\n"
++"  float tHit = trace(ro,rd,hp,hn,hmat,glow);\n"
++"  float fogT;\n"
++"  vec3 col;\n"
++"  if(tHit>0.0){\n"
++"    float fogD = 0.0040 + 0.013*exp(-max(hp.y,0.0)*0.055);\n"
++"    fogT = exp(-fogD*tHit);\n"
++"    if(hmat<0.5){\n"
++"      col = vec3(0.016,0.018,0.026)*0.8 + surfEmis(hp,hn)*fogT;\n"
++"      col += vec3(0.03,0.05,0.09)*0.35*fogT*(0.5+0.5*abs(hn.y));\n"
++"    } else {\n"
++"      float wet = 0.30 + 0.70*smoothstep(0.35,0.75, fbm(hp.xz*0.18)+0.08);\n"
++"      vec3 rdd = reflect(rd, normalize(hn + vec3(0.02*sin(hp.z*0.9+uTime*1.3), 0.0, 0.03*sin(hp.x*0.7+uTime))));\n"
++"      vec3 refl = traceEmit(hp + vec3(0.0,0.02,0.0), rdd);\n"
++"      float spark = pow(hash12(floor(hp.xz*6.0)+floor(uTime*8.0)), 42.0)*0.5;\n"
++"      col = vec3(0.010,0.012,0.018) + refl*wet*0.85 + spark;\n"
++"      col += vec3(0.02,0.03,0.05)*0.5;\n"
++"    }\n"
++"    col *= fogT;\n"
++"  } else {\n"
++"    fogT = 0.0;\n"
++"    col = skyCol(rd);\n"
++"  }\n"
++"  float skyAmt = 1.0-fogT;\n"
++"  col += skyCol(rd)*skyAmt*0.85;\n"
++"  col += glow*(0.22+0.40*fogT)*empMul()*0.75;\n"
++"  col += vec3(0.42,0.58,0.80)*rainStreak(uv)*0.30;\n"
++"  col += vec3(0.05,0.055,0.085)*flashVal()*skyAmt;\n"
++"  vec3 fogC = mix(vec3(0.020,0.030,0.055), vec3(0.085,0.048,0.035), pow(1.0-fogT,2.0));\n"
++"  col = mix(col, fogC, skyAmt*0.45);\n"
++"  col = aces(col*1.12);\n"
++"  float luma = dot(col, vec3(0.299,0.587,0.114));\n"
++"  col += vec3(-0.004,0.004,0.020)*(1.0-luma);\n"
++"  col.r *= 1.03; col.b *= 1.10;\n"
++"  float vig = 1.0 - 0.42*pow(length(uv*vec2(0.82,1.0)),2.0);\n"
++"  col *= vig;\n"
++"  col = pow(max(col,0.0), vec3(0.4545));\n"
++"  gl_FragColor = vec4(col,1.0);\n"
++"}\n";
+
+var BRIGHT_FS = ""
++"precision mediump float;\n"
++"uniform sampler2D uTex;\n"
++"varying vec2 vUv;\n"
++"void main(){\n"
++"  vec3 c = texture2D(uTex, vUv).rgb;\n"
++"  float l = dot(c, vec3(0.299,0.587,0.114));\n"
++"  float b = smoothstep(0.70, 0.96, l);\n"
++"  gl_FragColor = vec4(c*b*1.1, 1.0);\n"
++"}\n";
+
+var BLUR_FS = ""
++"precision mediump float;\n"
++"uniform sampler2D uTex; uniform vec2 uDir;\n"
++"varying vec2 vUv;\n"
++"void main(){\n"
++"  vec3 c = texture2D(uTex, vUv).rgb*0.2270;\n"
++"  c += texture2D(uTex, vUv+uDir*1.385).rgb*0.3162;\n"
++"  c += texture2D(uTex, vUv-uDir*1.385).rgb*0.3162;\n"
++"  c += texture2D(uTex, vUv+uDir*3.231).rgb*0.0703;\n"
++"  c += texture2D(uTex, vUv-uDir*3.231).rgb*0.0703;\n"
++"  gl_FragColor = vec4(c, 1.0);\n"
++"}\n";
+
+var COMP_FS = ""
++"precision mediump float;\n"
++"uniform sampler2D uScene; uniform sampler2D uBloom;\n"
++"uniform vec2 uRes; uniform float uTime; uniform float uGlitch;\n"
++"varying vec2 vUv;\n"
++"float hash11b(float p){ p=fract(p*0.1031); p*=p+33.33; p*=p+p; return fract(p); }\n"
++"float hash21b(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }\n"
++"void main(){\n"
++"  vec2 uv = vUv;\n"
++"  float row = floor(uv.y*uRes.y/8.0);\n"
++"  float gOn = uGlitch*step(0.90, hash21b(vec2(row, floor(uTime*20.0))));\n"
++"  uv.x += (hash11b(row+floor(uTime*20.0)*7.7)-0.5)*0.22*gOn;\n"
++"  uv = clamp(uv, 0.001, 0.999);\n"
++"  vec2 d = uv-0.5;\n"
++"  float ca = 0.0022 + 0.02*gOn;\n"
++"  vec3 col;\n"
++"  col.r = texture2D(uScene, clamp(uv+d*ca,0.0,1.0)).r;\n"
++"  col.g = texture2D(uScene, uv).g;\n"
++"  col.b = texture2D(uScene, clamp(uv-d*ca,0.0,1.0)).b;\n"
++"  vec3 bl = texture2D(uBloom, uv).rgb;\n"
++"  col += bl*0.45;\n"
++"  col += bl*vec3(0.4,0.15,0.6)*0.12;\n"
++"  col = min(col, vec3(1.0));\n"
++"  col += 0.006*sin(uv.y*uRes.y*1.6);\n"
++"  col += (hash21b(gl_FragCoord.xy + fract(uTime)*vec2(73.1,91.7))-0.5)*0.022;\n"
++"  col = mix(col, col*vec3(1.06,0.98,1.04), gOn);\n"
++"  gl_FragColor = vec4(max(col,0.0), 1.0);\n"
++"}\n";
+
+function compile(type, src){
+  var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
+    console.error("SHADER COMPILE FAILED:\n" + gl.getShaderInfoLog(s)); return null;
+  }
+  return s;
+}
+function makeProg(fsrc){
+  var vs = compile(gl.VERTEX_SHADER, QUAD_VS), fs = compile(gl.FRAGMENT_SHADER, fsrc);
+  if(!vs || !fs) return null;
+  var p = gl.createProgram();
+  gl.attachShader(p,vs); gl.attachShader(p,fs); gl.linkProgram(p);
+  if(!gl.getProgramParameter(p, gl.LINK_STATUS)){ console.error(gl.getProgramInfoLog(p)); return null; }
+  return p;
+}
+var pScene = makeProg(SCENE_FS), pBright = makeProg(BRIGHT_FS), pBlur = makeProg(BLUR_FS), pComp = makeProg(COMP_FS);
+if(!pScene || !pBright || !pBlur || !pComp){
+  document.getElementById("boot").innerHTML = "<div style='color:#ff2b7a;letter-spacing:.2em'>GPU SHADER REFUSED - CHECK CONSOLE.</div>"; return;
+}
+var buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+function bindQuad(p){
+  var a = gl.getAttribLocation(p,"aPos");
+  gl.enableVertexAttribArray(a);
+  gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+}
+function U(p, names){ var o={}; names.forEach(function(n){ o[n]=gl.getUniformLocation(p,n); }); return o; }
+var US = U(pScene, ["uRes","uTime","uYaw","uPitch","uZ","uSway","uEmp"]);
+var UB = U(pBright, ["uTex"]);
+var UL = U(pBlur, ["uTex","uDir"]);
+var UC = U(pComp, ["uScene","uBloom","uRes","uTime","uGlitch"]);
+
+function makeTarget(w,h){
+  var t = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  var f = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  return {tex:t, fbo:f, w:w, h:h};
+}
+var tgtScene=null, tgtA=null, tgtB=null;
+function makeTargets(w,h){
+  if(tgtScene){ gl.deleteTexture(tgtScene.tex); gl.deleteFramebuffer(tgtScene.fbo); }
+  if(tgtA){ gl.deleteTexture(tgtA.tex); gl.deleteFramebuffer(tgtA.fbo); }
+  if(tgtB){ gl.deleteTexture(tgtB.tex); gl.deleteFramebuffer(tgtB.fbo); }
+  var hw = Math.max(1, w>>1), hh = Math.max(1, h>>1);
+  tgtScene = makeTarget(w,h); tgtA = makeTarget(hw,hh); tgtB = makeTarget(hw,hh);
+}
+
+var yawT=0, pitchT=0, yaw=0, pitch=0;
+var zPos=0, thrust=0;
+var glitch=0, emp=0;
+var renderScale = 1.0;
+var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+var dbg = gl.getExtension("WEBGL_debug_renderer_info");
+var swRenderer = false;
+if(dbg){ var rname = gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)||"";
+  swRenderer = /swiftshader|llvmpipe|software/i.test(rname); }
+if(swRenderer) renderScale = 0.30;
+if(/[?&]q=low/.test(location.search)) renderScale = Math.min(renderScale, 0.35);
+
+function resize(){
+  var dpr = Math.min(window.devicePixelRatio||1, 1.75);
+  var w = Math.round(window.innerWidth * dpr * renderScale);
+  var h = Math.round(window.innerHeight * dpr * renderScale);
+  if(canvas.width!==w||canvas.height!==h){ canvas.width=w; canvas.height=h; makeTargets(w,h); }
+  var resEl=document.getElementById("res");
+  if(resEl) resEl.textContent = w+"x"+h;
+}
+window.addEventListener("resize", resize);
+
+window.addEventListener("pointermove", function(e){
+  yawT = ((e.clientX/window.innerWidth) - 0.5) * -0.62;
+  pitchT = ((e.clientY/window.innerHeight) - 0.5) * 0.20;
+}, {passive:true});
+window.addEventListener("wheel", function(e){
+  e.preventDefault();
+  thrust += -e.deltaY * 0.012;
+  thrust = Math.max(-3, Math.min(26, thrust));
+}, {passive:false});
+window.addEventListener("pointerdown", function(e){
+  if(e.target && e.target.id==="audioBtn") return;
+  glitch = 1.0; emp = 1.0;
+});
+window.addEventListener("keydown", function(e){
+  var k = e.key.toLowerCase();
+  if(k==="f"){ if(document.fullscreenElement){ document.exitFullscreen(); } else if(document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen(); } }
+  if(k==="arrowup"||k==="w"){ thrust=Math.min(26,thrust+4); }
+  if(k==="arrowdown"||k==="s"){ thrust=Math.max(-3,thrust-4); }
+});
+
+var actx=null, audioOn=false, master=null, thunderGain=null;
+document.getElementById("audioBtn").addEventListener("click", function(){
+  var btn=this;
+  if(!actx){
+    actx = new (window.AudioContext||window.webkitAudioContext)();
+    master = actx.createGain(); master.gain.value=0; master.connect(actx.destination);
+    var len = actx.sampleRate*3;
+    var nb = actx.createBuffer(1,len,actx.sampleRate);
+    var ch = nb.getChannelData(0); var lastv=0;
+    for(var i=0;i<len;i++){ var wn=Math.random()*2-1; lastv=(lastv+0.02*wn)/1.02; ch[i]=lastv*3.5; }
+    var rum = actx.createBufferSource(); rum.buffer=nb; rum.loop=true;
+    var lp = actx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=320;
+    var rg = actx.createGain(); rg.gain.value=0.55;
+    rum.connect(lp); lp.connect(rg); rg.connect(master); rum.start();
+    var hr = actx.createBufferSource(); hr.buffer=nb; hr.loop=true;
+    var hp = actx.createBiquadFilter(); hp.type="highpass"; hp.frequency.value=4200;
+    var hg = actx.createGain(); hg.gain.value=0.12;
+    var lfo = actx.createOscillator(); lfo.frequency.value=0.13;
+    var lfoG = actx.createGain(); lfoG.gain.value=0.05;
+    lfo.connect(lfoG); lfoG.connect(hg.gain); lfo.start();
+    hr.connect(hp); hp.connect(hg); hg.connect(master); hr.start();
+    var drone = actx.createOscillator(); drone.type="sawtooth"; drone.frequency.value=41.2;
+    var dpf = actx.createBiquadFilter(); dpf.type="lowpass"; dpf.frequency.value=160; dpf.Q.value=6;
+    var dg = actx.createGain(); dg.gain.value=0.16;
+    drone.connect(dpf); dpf.connect(dg); dg.connect(master); drone.start();
+    var drone2 = actx.createOscillator(); drone2.type="sine"; drone2.frequency.value=82.4;
+    var dg2 = actx.createGain(); dg2.gain.value=0.08;
+    drone2.connect(dg2); dg2.connect(master); drone2.start();
+    var tb = actx.createBuffer(1,actx.sampleRate*2,actx.sampleRate);
+    var tc = tb.getChannelData(0); var lv=0;
+    for(var j=0;j<tc.length;j++){ var w2=Math.random()*2-1; lv=(lv+0.008*w2)/1.008; tc[j]=lv*8.0*Math.pow(1.0-j/tc.length,1.5); }
+    thunderGain = actx.createGain(); thunderGain.gain.value=0; thunderGain.connect(master);
+    var tsrc = actx.createBufferSource(); tsrc.buffer=tb; tsrc.loop=true;
+    var tlp = actx.createBiquadFilter(); tlp.type="lowpass"; tlp.frequency.value=110;
+    tsrc.connect(tlp); tlp.connect(thunderGain); tsrc.start();
+  }
+  audioOn = !audioOn;
+  if(actx.state==="suspended") actx.resume();
+  master.gain.linearRampToValueAtTime(audioOn?0.5:0.0, actx.currentTime+0.8);
+  btn.textContent = audioOn ? "AUDIO: ONLINE" : "AUDIO: OFFLINE";
+  btn.classList.toggle("on", audioOn);
+  btn.setAttribute("aria-pressed", audioOn?"true":"false");
+});
+
+var coordsEl=document.getElementById("coords"), spdEl=document.getElementById("spd"),
+    fpsEl=document.getElementById("fps"), sectorEl=document.getElementById("sector"), wardEl=document.getElementById("ward");
+var wards=["KABUKI","JIG-JIG","WATSON","CENTRO","PACIFICA","COAL","SANTO"];
+var hudT=0;
+
+function drawScene(t){
+  gl.useProgram(pScene); bindQuad(pScene);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, tgtScene.fbo);
+  gl.viewport(0,0,tgtScene.w,tgtScene.h);
+  gl.uniform2f(US.uRes, tgtScene.w, tgtScene.h);
+  gl.uniform1f(US.uTime, t);
+  gl.uniform1f(US.uYaw, yaw);
+  gl.uniform1f(US.uPitch, pitch);
+  gl.uniform1f(US.uZ, zPos);
+  gl.uniform1f(US.uSway, Math.sin(t*0.13)*5.0 + yaw*14.0);
+  gl.uniform1f(US.uEmp, reduced?0:emp);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+function bloomPass(){
+  gl.bindFramebuffer(gl.FRAMEBUFFER, tgtA.fbo);
+  gl.viewport(0,0,tgtA.w,tgtA.h);
+  gl.useProgram(pBright); bindQuad(pBright);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tgtScene.tex);
+  gl.uniform1i(UB.uTex, 0);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, tgtB.fbo);
+  gl.useProgram(pBlur); bindQuad(pBlur);
+  gl.bindTexture(gl.TEXTURE_2D, tgtA.tex); gl.uniform1i(UL.uTex, 0);
+  gl.uniform2f(UL.uDir, 2.4/tgtB.w, 0);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, tgtA.fbo);
+  gl.bindTexture(gl.TEXTURE_2D, tgtB.tex);
+  gl.uniform2f(UL.uDir, 0, 2.4/tgtA.h);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+function compositePass(t){
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0,0,canvas.width,canvas.height);
+  gl.useProgram(pComp); bindQuad(pComp);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tgtScene.tex); gl.uniform1i(UC.uScene, 0);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tgtA.tex); gl.uniform1i(UC.uBloom, 1);
+  gl.uniform2f(UC.uRes, canvas.width, canvas.height);
+  gl.uniform1f(UC.uTime, t);
+  gl.uniform1f(UC.uGlitch, reduced?0:glitch);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+
+var last = performance.now(), ema = 16, frames=0, fpsT=0, fps=0, scaleT=0, nextFlash=8;
+function frame(now){
+  requestAnimationFrame(frame);
+  var dt = Math.min((now-last)/1000, 0.066); last = now;
+  var t = now*0.001;
+  if(reduced){ glitch=0; emp=0; thrust=0; }
+  yaw += (yawT-yaw)*Math.min(1,dt*3.2);
+  pitch += (pitchT-pitch)*Math.min(1,dt*3.2);
+  thrust += (4.0 - thrust)*Math.min(1,dt*0.55);
+  zPos -= thrust*dt*3.0;
+  glitch *= Math.pow(0.02, dt*2.2);
+  emp *= Math.pow(0.25, dt);
+  if(glitch<0.003) glitch=0;
+  if(emp<0.003) emp=0;
+  resize();
+  if(!tgtScene) return;
+  drawScene(t);
+  bloomPass();
+  compositePass(t);
+  if(thunderGain && audioOn && actx){
+    if(t > nextFlash){ nextFlash = t + 6 + Math.random()*18;
+      var nowA = actx.currentTime;
+      thunderGain.gain.cancelScheduledValues(nowA);
+      thunderGain.gain.setValueAtTime(0.0001, nowA);
+      thunderGain.gain.linearRampToValueAtTime(0.9, nowA+0.08);
+      thunderGain.gain.exponentialRampToValueAtTime(0.001, nowA+1.8);
+    }
+  }
+  ema += (dt*1000 - ema)*0.08;
+  if(!swRenderer){
+    scaleT += dt;
+    if(scaleT > 1.4){
+      scaleT = 0;
+      if(ema > 34 && renderScale > 0.5){ renderScale = Math.max(0.5, renderScale-0.12); resize(); }
+      else if(ema < 15 && renderScale < 1.0){ renderScale = Math.min(1.0, renderScale+0.1); resize(); }
+    }
+  }
+  frames++; fpsT += dt;
+  if(fpsT>=1){ fps=Math.round(frames/fpsT); frames=0; fpsT=0; if(fpsEl) fpsEl.textContent=fps; }
+  hudT += dt;
+  if(hudT>0.4 && coordsEl){
+    hudT=0;
+    coordsEl.textContent = (Math.abs(zPos)%1000).toFixed(2)+" / "+(Math.sin(t*0.21)*5).toFixed(2);
+    if(spdEl) spdEl.textContent = thrust.toFixed(1);
+    if(sectorEl && Math.random()<0.12) sectorEl.textContent = 1+Math.floor(Math.random()*23);
+    if(wardEl && Math.random()<0.06) wardEl.textContent = wards[Math.floor(Math.random()*wards.length)];
+  }
+}
+resize();
+requestAnimationFrame(frame);
+
+var bootLines = [
+  ["&gt; ESTABLISHING NEURAL LINK ............", "&nbsp;<span class='ok'>OK</span>", 260],
+  ["&gt; OPTIC CORTEX HANDSHAKE .............", "&nbsp;<span class='ok'>OK</span>", 340],
+  ["&gt; LOADING GEOSPACE / NIGHT_CITY_04 ...", "&nbsp;<span class='ok'>OK</span>", 520],
+  ["&gt; ATMOSPHERE: ACID RAIN / SMOG 87% ...", "&nbsp;<span class='ok'>OK</span>", 300],
+  ["&gt; ICE SWEEP ..........................", "&nbsp;<span class='warn'>3 FLAGS IGNORED</span>", 460],
+  ["&gt; BODY HOT. MIND COLD.", "", 300]
+];
+var bootEl = document.getElementById("bootlines"), bi=0;
+function bootStep(){
+  if(bi >= bootLines.length){
+    bootEl.innerHTML += "<div class='ok' style='margin-top:.6em;letter-spacing:.35em'>&gt; WELCOME TO THE NIGHT CITY<span class='cursor'>&nbsp;</span></div>";
+    setTimeout(function(){ document.getElementById("boot").classList.add("gone"); }, 1300);
+    return;
+  }
+  var row = bootLines[bi++];
+  var div = document.createElement("div");
+  div.innerHTML = row[0] + row[1];
+  bootEl.appendChild(div);
+  setTimeout(bootStep, row[2]);
+}
+bootStep();
+})();
+</script>
+</body>
+</html>
