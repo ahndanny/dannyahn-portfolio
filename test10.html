@@ -84,6 +84,19 @@ var SCENE_FS = ""
 +"mat2 rot(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }\n"
 +"float sdBox(vec3 p, vec3 b){ vec3 q=abs(p)-b; return length(max(q,0.0))+min(max(q.x,max(q.y,q.z)),0.0); }\n"
 +"float fbm(vec2 p){ float v=0.0,a=0.5; for(int i=0;i<3;i++){ v+=a*hash12(p); p=p*2.07+1.3; a*=0.5;} return v; }\n"
++"float waveH(vec2 xz){\n"
++"  float t = uTime*0.9;\n"
++"  vec2 p = xz*0.17;\n"
++"  float h = 0.42*sin(p.x*1.7 + t*1.15)\n"
++"          + 0.34*sin(p.y*2.1 - t*0.85)\n"
++"          + 0.26*sin(dot(p,vec2(0.9,1.3))*1.4 + t*1.7)\n"
++"          + 0.18*sin(dot(p,vec2(-1.25,0.75))*1.9 - t*1.35)\n"
++"          + 0.10*sin(dot(p,vec2(2.3,-1.9))*2.6 + t*2.3)\n"
++"          + 0.07*sin(dot(p,vec2(-3.1,2.7))*4.2 - t*3.1);\n"
++"  return h*0.55 - 0.18;\n"
++"}\n"
++"vec2 ripples(vec2 p){ float e=0.30; float a=fbm(p*1.7 + uTime*vec2(0.25,0.18));\n"
++"  return vec2(fbm((p+vec2(e,0.0))*1.7 + uTime*vec2(0.25,0.18))-a, fbm((p+vec2(0.0,e))*1.7 + uTime*vec2(0.25,0.18))-a)/e*0.045; }\n"
 +"void cellInfo(vec2 id, out float bh, out float wx, out float wz, out float ph, out vec2 off, out float seed){\n"
 +"  float a = hash12(id+1.7), b = hash12(id+5.3), r = hash12(id+9.7);\n"
 +"  float w1 = 3.2 + 1.9*a, w2 = w1*(0.55+0.5*b);\n"
@@ -111,7 +124,7 @@ var SCENE_FS = ""
 +"  if(bh > 66.0) d = min(d, sdBox(q - vec3(0.0, bh+ph*0.5+5.0, 0.0), vec3(0.12,5.0,0.12)));\n"
 +"  oId=id; oBh=bh; oSeed=seed; return d;\n"
 +"}\n"
-+"float map(vec3 p){ vec2 id; float bh,s; float d=mapB(p,id,bh,s); return min(d,p.y); }\n"
++"float map(vec3 p){ vec2 id; float bh,s; float d=mapB(p,id,bh,s); return min(d, p.y - waveH(p.xz)); }\n"
 +"float empMul(){ return mix(1.0, 0.10 + 0.90*step(0.55, hash11(floor(uTime*23.0))), uEmp); }\n"
 +"float flashVal(){\n"
 +"  float gate = hash11(floor(uTime*0.09));\n"
@@ -208,6 +221,10 @@ var SCENE_FS = ""
 +"vec3 skyCol(vec3 rd){\n"
 +"  float h = clamp(rd.y*0.5+0.5, 0.0, 1.0);\n"
 +"  vec3 c = mix(vec3(0.052,0.030,0.048), vec3(0.004,0.007,0.020), pow(h,0.8));\n"
++"  vec2 ck = rd.xz/(abs(rd.y)+0.15);\n"
++"  float cl = fbm(ck*0.55 + vec2(uTime*0.016,0.0));\n"
++"  float clm = smoothstep(0.42,0.72,cl)*clamp(1.0-abs(rd.y)*1.4,0.0,1.0);\n"
++"  c += mix(vec3(0.10,0.055,0.075), vec3(0.055,0.075,0.125), fract(cl*3.7))*clm*1.5;\n"
 +"  c += vec3(0.11,0.055,0.028)*pow(1.0-abs(rd.y),9.0)*1.35;\n"
 +"  c += vec3(0.035,0.015,0.06)*pow(1.0-abs(rd.y),5.0)*max(0.0,-rd.z)*0.8;\n"
 +"  float fl = flashVal();\n"
@@ -227,7 +244,7 @@ var SCENE_FS = ""
 +"      hitP=p;\n"
 +"      vec2 e=vec2(0.0015,0.0);\n"
 +"      hitN=normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx)));\n"
-+"      hitMat = (p.y < 0.05) ? 1.0 : 0.0;\n"
++"      vec2 mid; float mbh,msd; hitMat = (mapB(p,mid,mbh,msd) > p.y - waveH(p.xz)) ? 1.0 : 0.0;\n"
 +"      return t;\n"
 +"    }\n"
 +"    t += d*0.94;\n"
@@ -269,7 +286,7 @@ var SCENE_FS = ""
 +"  vec2 uv = (gl_FragCoord.xy - 0.5*uRes)/uRes.y;\n"
 +"  uv = rot(0.012*sin(uTime*0.11))*uv;\n"
 +"  mat2 ry = rot(uYaw); mat2 rx = rot(uPitch);\n"
-+"  vec3 ro = vec3(uSway, 3.0 + 0.5*sin(uTime*0.21), uZ);\n"
++"  vec3 ro = vec3(uSway, 2.35 + 0.45*sin(uTime*0.21), uZ);\n"
 +"  vec3 rd = normalize(vec3(uv*1.05, -1.7));\n"
 +"  rd.yz = rx*rd.yz; rd.xz = ry*rd.xz;\n"
 +"  vec3 hp,hn,glow; float hmat;\n"
@@ -283,12 +300,24 @@ var SCENE_FS = ""
 +"      col = vec3(0.016,0.018,0.026)*0.8 + surfEmis(hp,hn)*fogT;\n"
 +"      col += vec3(0.03,0.05,0.09)*0.35*fogT*(0.5+0.5*abs(hn.y));\n"
 +"    } else {\n"
-+"      float wet = 0.30 + 0.70*smoothstep(0.35,0.75, fbm(hp.xz*0.18)+0.08);\n"
-+"      vec3 rdd = reflect(rd, normalize(hn + vec3(0.02*sin(hp.z*0.9+uTime*1.3), 0.0, 0.03*sin(hp.x*0.7+uTime))));\n"
-+"      vec3 refl = traceEmit(hp + vec3(0.0,0.02,0.0), rdd);\n"
-+"      float spark = pow(hash12(floor(hp.xz*6.0)+floor(uTime*8.0)), 42.0)*0.5;\n"
-+"      col = vec3(0.010,0.012,0.018) + refl*wet*0.85 + spark;\n"
-+"      col += vec3(0.02,0.03,0.05)*0.5;\n"
++"      vec2 wp = hp.xz;\n"
++"      float eps = 0.07;\n"
++"      float h0 = waveH(wp);\n"
++"      vec2 rp = ripples(wp);\n"
++"      vec3 wn = normalize(vec3(-(waveH(wp+vec2(eps,0.0))-h0)/eps - rp.x*1.6, 1.0, -(waveH(wp+vec2(0.0,eps))-h0)/eps - rp.y*1.6));\n"
++"      vec3 rdd = reflect(rd, wn);\n"
++"      vec3 refl = traceEmit(hp + vec3(0.0,0.25,0.0), rdd);\n"
++"      if(rdd.y > 0.0) refl += skyCol(rdd)*1.6;\n"
++"      refl += vec3(0.10,0.13,0.22)*pow(clamp(dot(wn,vec3(0.0,1.0,0.0))+ (wn.x*0.5+wn.z*0.3)*1.8,0.0,1.0),3.0)*0.55;\n"
++"      float fres = 0.02 + 0.98*pow(1.0 - max(dot(-rd, wn), 0.0), 5.0);\n"
++"      vec3 deep = vec3(0.004,0.011,0.020);\n"
++"      col = mix(deep, refl*1.5, clamp(fres*2.2 + 0.22, 0.0, 0.95));\n"
++"      float foam = smoothstep(0.10, 0.20, h0)*0.09;\n"
++"      col += vec3(0.5,0.58,0.68)*foam;\n"
++"      float spark2 = pow(hash12(floor(wp*1.4)+floor(uTime*2.5)), 62.0)*0.14;\n"
++"      col += vec3(0.65,0.75,1.0)*spark2*(0.2+0.8*fres)*step(0.05, h0);\n"
++"      vec2 cid2; float cbh2,csd2; float bdist = mapB(hp+vec3(0.0,2.0,0.0),cid2,cbh2,csd2);\n"
++"      col *= 0.55 + 0.45*smoothstep(0.0, 3.5, bdist);\n"
 +"    }\n"
 +"    col *= fogT;\n"
 +"  } else {\n"
@@ -422,7 +451,28 @@ function makeTargets(w,h){
 }
 
 var yawT=0, pitchT=0, yaw=0, pitch=0;
-var zPos=0, thrust=0;
+var zPos=0, thrust=0, xOff=0;
+var CELLJS=14.0;
+function fract1(v){ return v-Math.floor(v); }
+function h12(x,y){
+  var a0=fract1(x*0.1031), b0=fract1(y*0.1031);
+  var d = a0*(b0+33.33) + b0*(a0+33.33) + a0*(a0+33.33);
+  return fract1(((a0+d)+(b0+d))*(a0+d));
+}
+function buildingAt(x,z){
+  var ix=Math.floor(x/CELLJS), iy=Math.floor(z/CELLJS);
+  var a=h12(ix+1.7,iy+1.7), b=h12(ix+5.3,iy+5.3), r=h12(ix+9.7,iy+9.7);
+  var w1=3.2+1.9*a, w2=w1*(0.55+0.5*b);
+  var wx=w1+(w2-w1)*r, wz=w2+(w1-w2)*r;
+  var mo=7-Math.max(wx,wz)-1.7;
+  var ox=(h12(ix+3.1,iy+3.1)-0.5)*2*Math.max(mo,0);
+  var oz=(h12(ix+4.7,iy+4.7)-0.5)*2*Math.max(mo,0);
+  var ctrx=ix*CELLJS+CELLJS*0.5+ox, ctrz=iy*CELLJS+CELLJS*0.5+oz;
+  var pw=Math.min(wx+1.6,6.4), pd=Math.min(wz+1.6,6.4);
+  var dx=x-ctrx, dz=z-ctrz;
+  if(Math.abs(dx)<pw+1.2 && Math.abs(dz)<pd+1.2) return {ctrx:ctrx,pw:pw};
+  return null;
+}
 var glitch=0, emp=0;
 var renderScale = 1.0;
 var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -522,7 +572,7 @@ function drawScene(t){
   gl.uniform1f(US.uYaw, yaw);
   gl.uniform1f(US.uPitch, pitch);
   gl.uniform1f(US.uZ, zPos);
-  gl.uniform1f(US.uSway, Math.sin(t*0.13)*5.0 + yaw*14.0);
+  gl.uniform1f(US.uSway, Math.sin(t*0.13)*5.0 + yaw*14.0 + xOff);
   gl.uniform1f(US.uEmp, reduced?0:emp);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
@@ -565,6 +615,15 @@ function frame(now){
   pitch += (pitchT-pitch)*Math.min(1,dt*3.2);
   thrust += (4.0 - thrust)*Math.min(1,dt*0.55);
   zPos -= thrust*dt*3.0;
+  var camX = Math.sin(t*0.13)*5.0 + yaw*14.0 + xOff;
+  var bhit = buildingAt(camX, zPos);
+  if(bhit){
+    var side = camX >= bhit.ctrx ? 1 : -1;
+    var want = bhit.ctrx + side*(bhit.pw + 1.3);
+    xOff += (want - camX)*Math.min(1, dt*6.0);
+  } else if(Math.abs(xOff) > 0.001){
+    xOff -= xOff*Math.min(1, dt*1.2);
+  }
   glitch *= Math.pow(0.02, dt*2.2);
   emp *= Math.pow(0.25, dt);
   if(glitch<0.003) glitch=0;
