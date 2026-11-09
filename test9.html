@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="The Shadow Ninja - an interactive vanilla-web micro-app. Move and his eyes follow. Click and he strikes.">
+<meta name="theme-color" content="#07080f">
+<title>The Shadow Ninja 忍者</title>
+<style>
+  :root{
+    --ink:#07080f; --ink2:#0b0d18; --red:#ff2d55; --red-dim:rgba(255,45,85,.35);
+    --moon:#7ee3ff; --text:#d8dce8; --dim:#8a90a6; --line:rgba(255,255,255,.08);
+    font-size:16px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--ink); color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    overflow-x:hidden; line-height:1.6;
+  }
+  ::selection{background:var(--red); color:#fff}
+  .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0}
+  :focus-visible{outline:2px solid var(--red); outline-offset:3px; border-radius:2px}
+
+  a.skip{position:absolute; left:-999px; top:0; z-index:100; background:var(--red); color:#fff; padding:.6rem 1rem; border-radius:0 0 6px 0}
+  a.skip:focus{left:0}
+
+  /* ---------- nav ---------- */
+  header.nav{
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1rem clamp(1rem,4vw,3rem);
+    background:linear-gradient(rgba(7,8,15,.85), rgba(7,8,15,0));
+    backdrop-filter:blur(6px);
+  }
+  .logo{display:flex; align-items:center; gap:.6rem; font-weight:700; letter-spacing:.18em; color:var(--text); text-decoration:none}
+  .logo .kanji{color:var(--red); font-size:1.35rem; line-height:1}
+  header.nav nav{display:flex; gap:1.6rem}
+  header.nav nav a{color:var(--dim); text-decoration:none; letter-spacing:.14em; font-size:.78rem; text-transform:uppercase; position:relative; padding:.3rem 0}
+  header.nav nav a::after{content:""; position:absolute; left:0; bottom:0; height:1px; width:0; background:var(--red); transition:width .3s ease}
+  header.nav nav a:hover{color:var(--text)}
+  header.nav nav a:hover::after{width:100%}
+
+  /* ---------- hero ---------- */
+  #hero{position:relative; height:100dvh; min-height:560px; overflow:hidden; background:var(--ink)}
+  #stage{position:absolute; inset:0; width:100%; height:100%; display:block; cursor:crosshair}
+  .hero-copy{position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; pointer-events:none; padding:0 1rem}
+  .hero-copy .ghost{position:absolute; font-size:clamp(12rem,38vw,30rem); color:rgba(255,45,85,.05); user-select:none; line-height:1; top:50%; transform:translateY(-54%)}
+  .hero-copy h1{
+    font-size:clamp(2.6rem,8vw,6.2rem); font-weight:800; letter-spacing:.3em; text-indent:.3em;
+    text-transform:uppercase; color:#fff; text-shadow:0 0 30px rgba(7,8,15,.9);
+  }
+  .hero-copy h1 .red{color:var(--red); animation:neonPulse 3.2s ease-in-out infinite}
+  @keyframes neonPulse{
+    0%,100%{text-shadow:0 0 18px rgba(255,45,85,.55), 0 0 60px rgba(255,45,85,.25)}
+    50%{text-shadow:0 0 6px rgba(255,45,85,.3), 0 0 22px rgba(255,45,85,.12)}
+  }
+  .hero-copy p.sub{color:var(--dim); letter-spacing:.5em; text-indent:.5em; text-transform:uppercase; font-size:clamp(.65rem,1.6vw,.85rem); margin-top:.9rem}
+  .hint{margin-top:2.2rem; font-size:.8rem; color:var(--dim); letter-spacing:.2em; animation:hintPulse 3s ease-in-out infinite}
+  @keyframes hintPulse{0%,100%{opacity:.45} 50%{opacity:1}}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    position:relative; display:inline-block; overflow:hidden;
+    margin-top:2.4rem; padding:.85rem 2.6rem;
+    color:var(--text); text-decoration:none; text-transform:uppercase; letter-spacing:.3em; font-size:.75rem; font-weight:600;
+    border:1px solid var(--line); border-radius:4px; background:rgba(255,255,255,.03);
+    pointer-events:auto; cursor:pointer;
+    transition:border-color .3s, color .3s;
+  }
+  .btn::before{
+    content:""; position:absolute; top:-20%; bottom:-20%; left:0; width:40%;
+    background:linear-gradient(90deg, transparent, rgba(255,45,85,.55), #fff 50%, rgba(255,45,85,.55), transparent);
+    transform:translateX(-180%) rotate(18deg); pointer-events:none;
+  }
+  .btn:hover{border-color:var(--red-dim); color:#fff}
+  .btn:hover::before{animation:slashSweep .55s ease forwards}
+  @keyframes slashSweep{from{transform:translateX(-180%) rotate(18deg)} to{transform:translateX(420%) rotate(18deg)}}
+  .btn::after{
+    content:""; position:absolute; left:50%; top:50%; width:12px; height:12px; border-radius:50%;
+    background:radial-gradient(circle, rgba(255,45,85,.5), rgba(255,45,85,0) 70%);
+    transform:translate(-50%,-50%) scale(0); opacity:0; pointer-events:none;
+  }
+  .btn:active::after{animation:puff .45s ease-out}
+  @keyframes puff{from{transform:translate(-50%,-50%) scale(0); opacity:.9} to{transform:translate(-50%,-50%) scale(9); opacity:0}}
+
+  /* ---------- parallax story ---------- */
+  #story{position:relative; min-height:100dvh; overflow:hidden; display:grid; place-items:center; background:linear-gradient(var(--ink), var(--ink2) 60%, var(--ink))}
+  .plx{position:absolute; left:-5%; right:-5%; top:-18%; height:136%; pointer-events:none; will-change:transform}
+  .plx svg{width:100%; height:100%; display:block}
+  .moon-orb{
+    position:absolute; width:clamp(120px,18vw,220px); height:clamp(120px,18vw,220px); border-radius:50%;
+    right:12%; top:14%;
+    background:radial-gradient(circle at 38% 35%, #fff8e8, #ffd9a0 55%, rgba(255,180,90,0) 72%);
+    box-shadow:0 0 80px 30px rgba(255,200,120,.18), 0 0 220px 90px rgba(255,160,80,.08);
+    animation:moonBreathe 7s ease-in-out infinite; will-change:transform, opacity;
+  }
+  @keyframes moonBreathe{0%,100%{opacity:.9} 50%{opacity:.65}}
+  .story-copy{position:relative; z-index:2; max-width:680px; text-align:center; padding:6rem 1.5rem}
+  .story-copy .kanji-accent{display:block; color:var(--red); opacity:.75; font-size:2rem; margin-bottom:1rem}
+  .story-copy h2{font-size:clamp(1.6rem,4vw,2.6rem); letter-spacing:.24em; text-transform:uppercase; margin-bottom:1.6rem; color:#fff}
+  .story-copy blockquote{color:var(--dim); font-size:clamp(1rem,2.2vw,1.25rem); font-style:italic; max-width:44ch; margin:1rem auto; border-left:2px solid var(--red-dim); padding-left:1.2rem; text-align:left}
+
+  /* ---------- abilities ---------- */
+  #abilities{position:relative; padding:8rem clamp(1.25rem,5vw,4rem); background:var(--ink2)}
+  #abilities::before{content:""; position:absolute; inset:0; background:radial-gradient(60% 40% at 50% 0%, rgba(255,45,85,.06), transparent 70%); pointer-events:none}
+  .sec-head{text-align:center; margin-bottom:4rem}
+  .sec-head h2{font-size:clamp(1.5rem,3.6vw,2.4rem); letter-spacing:.3em; text-transform:uppercase; color:#fff}
+  .sec-head p{color:var(--dim); margin-top:.8rem; font-size:.9rem; letter-spacing:.12em}
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:1.6rem; max-width:1100px; margin:0 auto; perspective:1200px}
+  .card{
+    position:relative; padding:2.2rem 1.8rem; border:1px solid var(--line); border-radius:10px;
+    background:linear-gradient(160deg, rgba(255,255,255,.045), rgba(255,255,255,.012));
+    transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+    transform-style:preserve-3d;
+    transition:transform .16s ease-out, box-shadow .35s ease, border-color .35s ease;
+    will-change:transform;
+  }
+  .card:hover{box-shadow:0 24px 70px -24px rgba(255,45,85,.4); border-color:var(--red-dim)}
+  .card::after{ /* glare */
+    content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; opacity:0; transition:opacity .35s;
+    background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,.13), transparent 65%);
+  }
+  .card:hover::after{opacity:1}
+  .card .icon{width:44px; height:44px; color:var(--red); margin-bottom:1.1rem; transform:translateZ(34px)}
+  .card h3{font-size:1.02rem; letter-spacing:.2em; text-transform:uppercase; color:#fff; margin-bottom:.6rem; transform:translateZ(26px)}
+  .card p{font-size:.88rem; color:var(--dim); transform:translateZ(16px)}
+  .card .btn{margin-top:1.4rem; padding:.6rem 1.6rem; font-size:.68rem; transform:translateZ(30px)}
+
+  /* ---------- final band ---------- */
+  #tenets{position:relative; padding:9rem 1.5rem; text-align:center; overflow:hidden; background:var(--ink)}
+  #tenets .kanji-bg{position:absolute; inset:0; display:grid; place-items:center; font-size:clamp(10rem,30vw,26rem); color:rgba(255,255,255,.025); user-select:none; line-height:1}
+  #tenets p{position:relative; font-size:clamp(1.05rem,2.6vw,1.5rem); letter-spacing:.35em; text-transform:uppercase; color:var(--text); max-width:50ch; margin:1.2rem auto}
+  #tenets p .red{color:var(--red)}
+
+  footer{padding:2.6rem 1.5rem; text-align:center; color:var(--dim); font-size:.78rem; letter-spacing:.14em; border-top:1px solid var(--line); background:var(--ink2)}
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation:none !important; transition:none !important}
+    .plx{transform:none !important}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#abilities">Skip to abilities</a>
+
+<header class="nav">
+  <a class="logo" href="#hero" aria-label="Shadow Ninja home"><span class="kanji" aria-hidden="true">忍</span>SHADOW<span style="color:var(--red)">NINJA</span></a>
+  <nav aria-label="Primary">
+    <a href="#story">Code</a>
+    <a href="#abilities">Abilities</a>
+    <a href="#tenets">Tenets</a>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ HERO ============ -->
+  <section id="hero" aria-labelledby="hero-h">
+    <canvas id="stage" role="img" aria-label="A minimalist ninja silhouette stands in a moonlit bamboo landscape. His eyes follow your cursor. Clicking anywhere makes him dash toward the click with a glowing katana slash."></canvas>
+    <div class="hero-copy">
+      <span class="ghost" aria-hidden="true">忍</span>
+      <h1 id="hero-h">Shadow <span class="red">Ninja</span></h1>
+      <p class="sub">Move and he watches &middot; Click and he strikes</p>
+      <p class="hint" aria-hidden="true">CLICK ANYWHERE ON THE SCENE</p>
+      <a class="btn" href="#abilities">Descend</a>
+    </div>
+  </section>
+
+  <!-- ============ STORY / PARALLAX ============ -->
+  <section id="story" aria-labelledby="story-h">
+    <div class="plx" data-depth="0.05" aria-hidden="true">
+      <svg viewBox="0 0 1440 700" preserveAspectRatio="none" focusable="false">
+        <path d="M0 520 L180 320 L340 470 L520 250 L700 460 L880 300 L1060 480 L1240 340 L1440 500 L1440 700 L0 700 Z" fill="#101426"/>
+      </svg>
+    </div>
+    <div class="moon-orb plx" data-depth="0.02" aria-hidden="true"></div>
+    <div class="plx" data-depth="0.12" aria-hidden="true">
+      <svg viewBox="0 0 1440 700" preserveAspectRatio="none" focusable="false">
+        <path d="M0 600 L220 380 L420 560 L640 330 L860 570 L1080 400 L1280 560 L1440 430 L1440 700 L0 700 Z" fill="#0b0e1c"/>
+        <g fill="#0b0e1c">
+          <rect x="60" y="430" width="9" height="270"/><rect x="46" y="470" width="37" height="6"/><rect x="46" y="540" width="37" height="6"/>
+          <rect x="104" y="470" width="7" height="230"/><rect x="92" y="510" width="31" height="5"/>
+        </g>
+      </svg>
+    </div>
+    <div class="plx" data-depth="0.22" aria-hidden="true">
+      <svg viewBox="0 0 1440 700" preserveAspectRatio="none" focusable="false">
+        <g fill="#070910">
+          <rect x="1300" y="330" width="14" height="370"/><rect x="1276" y="390" width="62" height="8"/><rect x="1276" y="480" width="62" height="8"/><rect x="1276" y="570" width="62" height="8"/>
+          <rect x="1352" y="260" width="11" height="440"/><rect x="1334" y="330" width="48" height="7"/><rect x="1334" y="430" width="48" height="7"/><rect x="1334" y="530" width="48" height="7"/>
+          <rect x="60" y="300" width="12" height="400"/><rect x="40" y="370" width="52" height="7"/><rect x="40" y="470" width="52" height="7"/>
+        </g>
+        <path d="M0 660 L1440 660 L1440 700 L0 700 Z" fill="#070910"/>
+      </svg>
+    </div>
+    <div class="story-copy">
+      <span class="kanji-accent" aria-hidden="true">者の道</span>
+      <h2 id="story-h">The Code of Shadow</h2>
+      <blockquote>&ldquo;The blade is only steel. The shadow is the discipline. The silence between heartbeats is where the war is won.&rdquo;</blockquote>
+      <blockquote>&ldquo;He does not run from you. He arrives where you already expected him least.&rdquo;</blockquote>
+    </div>
+  </section>
+
+  <!-- ============ ABILITIES ============ -->
+  <section id="abilities" aria-labelledby="ab-h">
+    <div class="sec-head">
+      <h2 id="ab-h">Ninja Abilities</h2>
+      <p>Hover a card &mdash; it senses you before you touch it.</p>
+    </div>
+    <div class="cards">
+      <article class="card">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" focusable="false"><path d="M13 2 L5 14 h6 l-2 8 L20 9 h-7 z"/></svg>
+        <h3>Shadow Step</h3>
+        <p>Cross a courtyard between two blinks. Distance becomes an opinion.</p>
+        <a class="btn" href="#hero" role="button" aria-label="Train Shadow Step">Train</a>
+      </article>
+      <article class="card">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" focusable="false"><path d="M4 20 L20 4 M15 4 h5 v5 M20 4 l-3 3"/></svg>
+        <h3>Steel Whisper</h3>
+        <p>The katana drawn so cleanly the air forgets it was ever cut.</p>
+        <a class="btn" href="#hero" role="button" aria-label="Train Steel Whisper">Train</a>
+      </article>
+      <article class="card">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" focusable="false"><path d="M4 15 c2-3 5-3 7 0 s5 3 7 0 M4 10 c2-3 5-3 7 0 s5 3 7 0" opacity=".9"/><circle cx="12" cy="19" r="2"/></svg>
+        <h3>Smoke Vanish</h3>
+        <p>A grey bloom opens. Inside it, a rumor. After it, nothing.</p>
+        <a class="btn" href="#hero" role="button" aria-label="Train Smoke Vanish">Train</a>
+      </article>
+      <article class="card">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" focusable="false"><path d="M19 13 A8 8 0 1 1 11 5 a6.5 6.5 0 0 0 8 8 z"/></svg>
+        <h3>Moon Gaze</h3>
+        <p>He reads the night like a letter he wrote himself years ago.</p>
+        <a class="btn" href="#hero" role="button" aria-label="Train Moon Gaze">Train</a>
+      </article>
+      <article class="card">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" focusable="false"><path d="M12 2 v20 M12 6 l6 -2 M12 11 l7 -2 M12 16 l6 -2 M12 6 l-6 -2 M12 11 l-7 -2 M12 16 l-6 -2"/></svg>
+        <h3>Bamboo Sprint</h3>
+        <p>Stalk to stalk, never touching ground twice. The grove stays quiet.</p>
+        <a class="btn" href="#hero" role="button" aria-label="Train Bamboo Sprint">Train</a>
+      </article>
+      <article class="card">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" focusable="false"><path d="M2 12 s4-6 10-6 10 6 10 6 -4 6-10 6S2 12 2 12 z"/><circle cx="12" cy="12" r="2.6"/></svg>
+        <h3>Iron Breath</h3>
+        <p>Ten minutes underwater, one heartbeat per minute. Patience as armor.</p>
+        <a class="btn" href="#hero" role="button" aria-label="Train Iron Breath">Train</a>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ TENETS ============ -->
+  <section id="tenets" aria-labelledby="t-h">
+    <span class="kanji-bg" aria-hidden="true">静</span>
+    <h2 id="t-h" class="sr-only">Tenets</h2>
+    <p>Stillness before <span class="red">motion</span></p>
+    <p>Silence before <span class="red">steel</span></p>
+    <p>Shadow before <span class="red">light</span></p>
+  </section>
+</main>
+
+<footer>The Shadow Ninja &mdash; a pure vanilla-web micro-app. No frameworks, no libraries, no engines.</footer>
+<noscript><p style="text-align:center;padding:2rem;color:#8a90a6">The ninja canvas needs JavaScript. The rest of the page still stands in the dark.</p></noscript>
+
+<script>
+(function(){
+  "use strict";
+  var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ================= canvas setup ================= */
+  var hero = document.getElementById("hero");
+  var canvas = document.getElementById("stage");
+  var ctx = canvas.getContext("2d");
+  var W = 0, H = 0, DPR = 1;
+  var bg = document.createElement("canvas");       // static offscreen scenery
+  var bgx = bg.getContext("2d");
+  var S = 1;                                        // ninja scale
+  var groundY = 0;
+
+  var mouse = { x: 0, y: 0 };
+  var ninja = { x: 0, y: 0 };                       // feet position
+  var dash = { active: false, t0: 0, dur: 0, x0: 0, x1: 0, cx: 0, cy: 0 };
+  var segs = [];        // katana trail segments
+  var parts = [];       // particles
+  var rings = [];       // impact rings
+  var ash = [];         // drifting embers (recycled)
+  var stars = [];
+  var fog = [];
+
+  var MAX_SEGS = 48, MAX_PARTS = 380;
+
+  function clamp(v,a,b){ return v<a?a : v>b?b : v; }
+  function rand(a,b){ return a + Math.random()*(b-a); }
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = hero.clientWidth; H = hero.clientHeight;
+    canvas.width = Math.round(W*DPR); canvas.height = Math.round(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    S = clamp(H/560, 0.7, 1.5);
+    groundY = H*0.86;
+    ninja.x = clamp(ninja.x || W*0.5, 40, W-40);
+    ninja.y = groundY;
+    if(!mouse.x && !mouse.y){ mouse.x = W*0.5; mouse.y = H*0.45; }
+    buildBackdrop();
+    seedAsh();
+  }
+
+  /* ---------- static backdrop on offscreen canvas ---------- */
+  function buildBackdrop(){
+    bg.width = Math.round(W*DPR); bg.height = Math.round(H*DPR);
+    bgx.setTransform(DPR,0,0,DPR,0,0);
+    var g = bgx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,"#0c1024"); g.addColorStop(0.55,"#0a0c1a"); g.addColorStop(1,"#07080f");
+    bgx.fillStyle = g; bgx.fillRect(0,0,W,H);
+
+    // stars
+    stars = [];
+    var n = Math.round(W*H/16000);
+    for(var i=0;i<n;i++) stars.push({x:rand(0,W), y:rand(0,H*0.5), r:rand(0.4,1.3), a:rand(0.15,0.7), ph:rand(0,6.28)});
+    for(i=0;i<stars.length;i++){ var st=stars[i];
+      bgx.fillStyle = "rgba(255,255,255,"+st.a.toFixed(2)+")";
+      bgx.beginPath(); bgx.arc(st.x, st.y, st.r, 0, 6.283); bgx.fill();
+    }
+
+    // moon + halo
+    var mx = W*0.78, my = H*0.20, mr = clamp(H*0.085, 30, 90);
+    var halo = bgx.createRadialGradient(mx,my,mr*0.4, mx,my, mr*4.2);
+    halo.addColorStop(0,"rgba(255,225,180,0.28)"); halo.addColorStop(1,"rgba(255,225,180,0)");
+    bgx.fillStyle = halo; bgx.beginPath(); bgx.arc(mx,my,mr*4.2,0,6.283); bgx.fill();
+    var disc = bgx.createRadialGradient(mx-mr*0.25,my-mr*0.25,mr*0.15, mx,my,mr);
+    disc.addColorStop(0,"#fff6e4"); disc.addColorStop(0.7,"#ffd9a2"); disc.addColorStop(1,"#e8a86a");
+    bgx.fillStyle = disc; bgx.beginPath(); bgx.arc(mx,my,mr,0,6.283); bgx.fill();
+
+    // far ridge
+    ridge(bgx, H*0.62, H*0.10, "#111629", 7);
+    // near ridge
+    ridge(bgx, H*0.72, H*0.08, "#0c101f", 5);
+
+    // torii silhouette (right of center)
+    var tx = W*0.55, ty = groundY, tw = clamp(W*0.09,70,140), th = tw*1.05;
+    bgx.fillStyle = "#160a10";
+    bgx.fillRect(tx-tw*0.42, ty-th, tw*0.09, th);
+    bgx.fillRect(tx+tw*0.33, ty-th, tw*0.09, th);
+    bgx.fillRect(tx-tw*0.55, ty-th, tw*1.1, th*0.07);
+    bgx.fillRect(tx-tw*0.48, ty-th+th*0.16, tw*0.96, th*0.05);
+    bgx.beginPath(); bgx.moveTo(tx-tw*0.62, ty-th); bgx.lineTo(tx+tw*0.62, ty-th); bgx.lineTo(tx+tw*0.55, ty-th-th*0.05); bgx.lineTo(tx-tw*0.55, ty-th-th*0.05); bgx.closePath(); bgx.fill();
+
+    // bamboo clusters (left + right edges)
+    bamboo(bgx, W*0.045, H, 5); bamboo(bgx, W*0.965, H, 4);
+
+    // ground
+    var gg = bgx.createLinearGradient(0,groundY-6,0,H);
+    gg.addColorStop(0,"#0a0d17"); gg.addColorStop(1,"#05060b");
+    bgx.fillStyle = gg; bgx.fillRect(0, groundY-4, W, H-groundY+4);
+    bgx.fillStyle = "rgba(126,227,255,0.06)"; bgx.fillRect(0, groundY-2, W, 1.5);
+  }
+
+  function ridge(c, base, amp, col, peaks){
+    c.fillStyle = col; c.beginPath(); c.moveTo(0, base+amp);
+    var step = W/(peaks-1), i;
+    for(i=0;i<peaks;i++){
+      var px = i*step, py = base - (i%2===0 ? amp*rand(0.7,1) : amp*rand(0.15,0.45));
+      if(i===0) c.lineTo(px, py); else c.quadraticCurveTo(px-step*0.5, base-amp*rand(0.3,0.7), px, py);
+    }
+    c.lineTo(W, base+amp); c.closePath(); c.fill();
+  }
+
+  function bamboo(c, bx, base, count){
+    c.fillStyle = "#0d1410";
+    for(var i=0;i<count;i++){
+      var x = bx + rand(-W*0.02, W*0.02), h = rand(H*0.28, H*0.5), w = rand(4,9);
+      c.fillRect(x, base-h, w, h);
+      for(var y=base-w*3; y>base-h; y-=rand(40,70)) c.fillRect(x-2, y, w+4, w*0.45);
+      c.strokeStyle = "#0d1410"; c.lineWidth = 2.4;
+      for(var l=0;l<4;l++){
+        var ly = base - h*rand(0.35,0.95);
+        c.beginPath(); c.moveTo(x+w/2, ly);
+        c.quadraticCurveTo(x+w/2+rand(12,30)*(Math.random()<0.5?-1:1), ly-rand(6,16), x+w/2+rand(22,48)*(Math.random()<0.5?-1:1), ly-rand(14,30));
+        c.stroke();
+      }
+    }
+  }
+
+  /* ---------- ambient ---------- */
+  function seedAsh(){
+    ash = [];
+    for(var i=0;i<36;i++) ash.push({x:rand(0,W), y:rand(0,H), r:rand(0.6,1.8), vy:rand(-14,-4), vx:rand(-6,6), a:rand(0.1,0.5), ph:rand(0,6.28)});
+    fog = [];
+    for(i=0;i<5;i++) fog.push({x:rand(0,W), y:H*rand(0.5,0.78), rx:rand(W*0.12,W*0.3), ry:rand(14,30), v:rand(3,10), a:rand(0.025,0.06)});
+  }
+
+  /* ================= ninja ================= */
+  function drawNinja(alpha, offX){
+    var x = ninja.x + (offX||0), y = ninja.y, s = S;
+    var hx = x, hy = y - 102*s;
+    var dx = mouse.x - x, dy = mouse.y - hy;
+    var ang = Math.atan2(dy, dx);
+    var lean = clamp(dx/1400, -0.1, 0.1) * (dash.active ? 3 : 1);
+    var eyeX = Math.cos(ang)*3.2*s, eyeY = Math.sin(ang)*1.8*s;
+    var breathe = REDUCED ? 0 : Math.sin(performance.now()/1000*2)*1.5*s;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(x, y + breathe);
+    ctx.rotate(lean);
+
+    var INK = "#04050a";
+    ctx.strokeStyle = INK; ctx.fillStyle = INK; ctx.lineCap = "round";
+
+    // legs (stance)
+    ctx.lineWidth = 13*s;
+    ctx.beginPath(); ctx.moveTo(-4*s,-46*s); ctx.lineTo(-26*s,0); ctx.stroke();     // back leg
+    ctx.beginPath(); ctx.moveTo(4*s,-46*s);  ctx.lineTo(18*s,0);  ctx.stroke();     // front leg
+    // torso
+    ctx.lineWidth = 24*s;
+    ctx.beginPath(); ctx.moveTo(0,-48*s); ctx.lineTo(0,-84*s); ctx.stroke();
+    // sash tail
+    ctx.lineWidth = 4*s;
+    ctx.beginPath(); ctx.moveTo(2*s,-52*s);
+    ctx.quadraticCurveTo(16*s,-40*s, 14*s+Math.sin(performance.now()/700)*3*s, -22*s);
+    ctx.stroke();
+    // arms
+    ctx.lineWidth = 9*s;
+    ctx.beginPath(); ctx.moveTo(-3*s,-78*s); ctx.lineTo(-20*s,-58*s); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(4*s,-78*s);  ctx.lineTo(22*s,-60*s);  ctx.stroke();
+    // katana (held low, forward)
+    ctx.save();
+    ctx.translate(22*s,-60*s); ctx.rotate(dash.active ? -1.35 : -0.32);
+    ctx.strokeStyle = "#1a1e2e"; ctx.lineWidth = 3.2*s;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(44*s,0); ctx.stroke();
+    ctx.strokeStyle = "#ff2d55"; ctx.lineWidth = 4.6*s;
+    ctx.beginPath(); ctx.moveTo(-7*s,0); ctx.lineTo(2*s,0); ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(6*s,-1); ctx.lineTo(42*s,-1); ctx.stroke();
+    ctx.restore();
+    // head
+    ctx.fillStyle = INK;
+    ctx.beginPath(); ctx.arc(0,-102*s, 16*s, 0, 6.283); ctx.fill();
+    // headband ribbons
+    ctx.strokeStyle = INK; ctx.lineWidth = 5*s;
+    var flut = REDUCED ? 0 : Math.sin(performance.now()/380)*4*s;
+    ctx.beginPath(); ctx.moveTo(-14*s,-104*s);
+    ctx.quadraticCurveTo(-30*s,-102*s+flut, -42*s, -94*s+flut*1.4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-14*s,-100*s);
+    ctx.quadraticCurveTo(-28*s,-94*s-flut, -36*s, -84*s-flut*1.2); ctx.stroke();
+
+    // eye glow (tracks cursor)
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = alpha*0.35;
+    ctx.fillStyle = "#ff2d55";
+    ctx.fillRect(-11*s+eyeX, -106.5*s+eyeY, 22*s, 7*s);
+    ctx.globalAlpha = alpha;
+    var eg = ctx.createLinearGradient(-10*s,0,10*s,0);
+    eg.addColorStop(0,"#ff2d55"); eg.addColorStop(0.5,"#ffb0c0"); eg.addColorStop(1,"#ff2d55");
+    ctx.fillStyle = eg;
+    ctx.fillRect(-9*s+eyeX, -105*s+eyeY, 18*s, 4*s);
+    ctx.globalCompositeOperation = "source-over";
+
+    // red rim light
+    ctx.strokeStyle = "rgba(255,45,85,0.16)"; ctx.lineWidth = 2*s;
+    ctx.beginPath(); ctx.arc(0,-102*s, 17.5*s, Math.PI*0.75, Math.PI*1.25); ctx.stroke();
+    ctx.restore();
+  }
+
+  /* ================= effects ================= */
+  function addSeg(x1,y1,x2,y2){ segs.push({x1:x1,y1:y1,x2:x2,y2:y2,t:0}); if(segs.length>MAX_SEGS) segs.shift(); }
+  function addParts(x,y,count,spread){
+    for(var i=0;i<count;i++){
+      if(parts.length>=MAX_PARTS) parts.shift();
+      var a=rand(0,6.283), v=rand(30,spread);
+      parts.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-rand(10,60),t:0,life:rand(0.35,0.9),r:rand(1,2.6),red:Math.random()<0.6});
+    }
+  }
+
+  function startDash(tx,ty){
+    if(REDUCED){ ninja.x = tx; return; }
+    dash.active = true;
+    dash.t0 = performance.now();
+    dash.dur = clamp(Math.abs(tx-ninja.x)*0.5, 90, 240);
+    dash.x0 = ninja.x;
+    dash.x1 = tx;
+    dash.cx = tx; dash.cy = ty;
+    addParts(ninja.x, groundY-70*S, 8, 120);
+  }
+
+  function drawFx(dt){
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    var i;
+    // trail segments
+    for(i=segs.length-1;i>=0;i--){
+      var sg = segs[i]; sg.t += dt;
+      var k = 1 - sg.t/0.45;
+      if(k<=0){ segs.splice(i,1); continue; }
+      ctx.strokeStyle = "rgba(255,45,85,"+(k*0.45).toFixed(3)+")";
+      ctx.lineWidth = 9*k+2;
+      ctx.beginPath(); ctx.moveTo(sg.x1,sg.y1); ctx.lineTo(sg.x2,sg.y2); ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,"+(k*0.9).toFixed(3)+")";
+      ctx.lineWidth = 2.2*k+0.6;
+      ctx.beginPath(); ctx.moveTo(sg.x1,sg.y1); ctx.lineTo(sg.x2,sg.y2); ctx.stroke();
+    }
+    // particles
+    for(i=parts.length-1;i>=0;i--){
+      var p = parts[i]; p.t += dt;
+      if(p.t>=p.life){ parts.splice(i,1); continue; }
+      p.vy += 130*dt;
+      p.x += p.vx*dt; p.y += p.vy*dt;
+      var pk = 1 - p.t/p.life;
+      ctx.fillStyle = p.red ? "rgba(255,45,85,"+(pk*0.9).toFixed(3)+")" : "rgba(255,255,255,"+(pk*0.85).toFixed(3)+")";
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r*pk+0.3, 0, 6.283); ctx.fill();
+    }
+    // impact rings
+    for(i=rings.length-1;i>=0;i--){
+      var r = rings[i]; r.t += dt;
+      var rk = r.t/0.4;
+      if(rk>=1){ rings.splice(i,1); continue; }
+      ctx.strokeStyle = "rgba(255,45,85,"+((1-rk)*0.55).toFixed(3)+")";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(r.x, r.y, 6+rk*60, 0, 6.283); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawAmbient(dt, t){
+    var i;
+    // fog
+    ctx.save();
+    for(i=0;i<fog.length;i++){
+      var f = fog[i];
+      f.x += f.v*dt; if(f.x - f.rx > W) f.x = -f.rx;
+      ctx.fillStyle = "rgba(150,170,220,"+f.a.toFixed(3)+")";
+      ctx.beginPath(); ctx.ellipse(f.x, f.y, f.rx, f.ry, 0, 0, 6.283); ctx.fill();
+    }
+    // embers
+    for(i=0;i<ash.length;i++){
+      var a = ash[i];
+      if(!REDUCED){ a.y += a.vy*dt; a.x += (a.vx + Math.sin(t/900+a.ph)*6)*dt; }
+      if(a.y < -10){ a.y = H+6; a.x = rand(0,W); }
+      ctx.fillStyle = "rgba(255,"+(a.ph>3?80:140)+",90,"+(a.a*(0.6+0.4*Math.sin(t/500+a.ph))).toFixed(3)+")";
+      ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, 6.283); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* ================= main loop ================= */
+  var last = performance.now();
+  var running = true;
+
+  function frame(now){
+    if(!running) return;
+    requestAnimationFrame(frame);
+    var dt = clamp((now-last)/1000, 0, 0.05); last = now;
+
+    // dash state
+    if(dash.active){
+      var k = (now - dash.t0)/dash.dur;
+      if(k >= 1){
+        k = 1; dash.active = false;
+        addSeg(ninja.x, groundY-95*S, dash.cx, dash.cy);
+        addParts(dash.cx, dash.cy, 22, 260);
+        rings.push({x:dash.cx, y:dash.cy, t:0});
+      }
+      var eased = 1-(1-k)*(1-k);
+      var px = ninja.x;
+      ninja.x = dash.x0 + (dash.x1-dash.x0)*eased;
+      if(Math.abs(ninja.x-px)>1) addSeg(px, groundY-90*S, ninja.x, groundY-90*S);
+      if(Math.random()<0.7) addParts((px+ninja.x)/2, groundY-90*S, 1, 60);
+    }
+
+    // render
+    ctx.clearRect(0,0,W,H);
+    ctx.drawImage(bg, 0, 0, W, H);
+    drawAmbient(dt, now);
+
+    if(dash.active){
+      for(var g=1;g<=3;g++){ drawNinja(0.14, -g*26*S*(dash.x1>dash.x0?1:-1)); }
+    }
+    drawFx(dt);
+    drawNinja(1, 0);
+
+    updateParallax();
+  }
+
+  /* ================= parallax ================= */
+  var plx = [];
+  function collectPlx(){
+    plx = [];
+    var els = document.querySelectorAll(".plx");
+    for(var i=0;i<els.length;i++){
+      var el = els[i];
+      plx.push({el:el, depth:parseFloat(el.getAttribute("data-depth"))||0, parentTop:el.parentElement.offsetTop});
+    }
+  }
+  function updateParallax(){
+    if(REDUCED) return;
+    var sy = window.pageYOffset;
+    for(var i=0;i<plx.length;i++){
+      var l = plx[i];
+      var rel = sy + window.innerHeight - l.parentTop;
+      l.el.style.transform = "translate3d(0,"+(rel*l.depth).toFixed(1)+"px,0)";
+    }
+  }
+
+  /* ================= input ================= */
+  hero.addEventListener("pointermove", function(e){
+    var r = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
+  });
+  hero.addEventListener("pointerdown", function(e){
+    if(e.target.closest(".btn")) return;
+    var r = canvas.getBoundingClientRect();
+    var mx = e.clientX - r.left, my = e.clientY - r.top;
+    startDash(clamp(mx,30,W-30), my);
+  });
+
+  document.addEventListener("visibilitychange", function(){
+    if(document.hidden){ running = false; }
+    else if(!running){ running = true; last = performance.now(); requestAnimationFrame(frame); }
+  });
+  window.addEventListener("resize", function(){ resize(); collectPlx(); });
+
+  /* ================= magnetic tilt cards ================= */
+  var cards = document.querySelectorAll(".card");
+  for(var c=0;c<cards.length;c++){
+    (function(card){
+      card.addEventListener("pointermove", function(e){
+        if(REDUCED) return;
+        var r = card.getBoundingClientRect();
+        var px = (e.clientX-r.left)/r.width, py = (e.clientY-r.top)/r.height;
+        card.style.setProperty("--ry", ((px-0.5)*14).toFixed(2)+"deg");
+        card.style.setProperty("--rx", ((0.5-py)*14).toFixed(2)+"deg");
+        card.style.setProperty("--mx", (px*100).toFixed(1)+"%");
+        card.style.setProperty("--my", (py*100).toFixed(1)+"%");
+      });
+      card.addEventListener("pointerleave", function(){
+        card.style.setProperty("--rx","0deg"); card.style.setProperty("--ry","0deg");
+      });
+    })(cards[c]);
+  }
+
+  /* ================= boot ================= */
+  resize();
+  collectPlx();
+  ninja.x = W*0.5; ninja.y = groundY;
+  // debug handle for automated QA (harmless)
+  window.__sn = {segs:segs, parts:parts, rings:rings, ninja:ninja, dash:dash};
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
