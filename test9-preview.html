@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="DISTRICT NINE - a raymarched cyberpunk megacity. Fly through neon rain.">
+<meta name="theme-color" content="#05060d">
+<title>DISTRICT NINE &#183; &#38651;&#33021;&#34903;&#21306;</title>
+<style>
+  :root{
+    --ink:#05060d; --cyan:#00f0ff; --mag:#ff1f55; --txt:#cdd3e0; --dim:#6d7488;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--ink);overflow:hidden}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;color:var(--txt)}
+  canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+  canvas#gl.dragging{cursor:grabbing}
+
+  .plate{background:rgba(4,5,11,.78);border:1px solid rgba(0,240,255,.16);border-radius:4px;
+    padding:.65rem .9rem;backdrop-filter:blur(4px);box-shadow:0 4px 24px rgba(0,0,0,.5)}
+
+  .hud{position:fixed;top:14px;left:14px;z-index:10;max-width:min(82vw,430px)}
+  .hud .t{font-weight:800;letter-spacing:.22em;font-size:.82rem;color:var(--txt);
+    text-shadow:0 0 14px rgba(0,240,255,.45)}
+  .hud .t em{color:var(--mag);font-style:normal;margin:0 .35rem}
+  .hud .jp{color:var(--cyan);letter-spacing:.5em;font-size:.7rem;margin-top:.15rem;opacity:.9}
+  .hud .hint{margin-top:.5rem;font-size:.68rem;letter-spacing:.08em;color:var(--dim);line-height:1.65}
+  .hud .hint b{color:var(--txt);font-weight:600}
+
+  .sig{position:fixed;top:14px;right:14px;z-index:10;font-size:.64rem;letter-spacing:.3em;
+    color:var(--dim);text-transform:uppercase;padding:.5rem .8rem}
+  .sig span{color:var(--cyan)}
+
+  .boot{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 120%, rgba(255,31,85,.10), transparent 60%),
+               radial-gradient(ellipse at 50% -20%, rgba(0,240,255,.10), transparent 55%), var(--ink);
+    transition:opacity 1.1s ease;pointer-events:none}
+  .boot.gone{opacity:0}
+  .glitch{position:relative;font-size:clamp(2.2rem,9vw,6.2rem);font-weight:900;letter-spacing:.12em;
+    color:#e8ecf5;text-shadow:0 0 26px rgba(0,240,255,.35)}
+  .glitch::before,.glitch::after{content:attr(data-t);position:absolute;left:0;top:0;width:100%;overflow:hidden}
+  .glitch::before{color:var(--mag);clip-path:inset(55% 0 10% 0);transform:translate(-3px,2px);
+    animation:gl1 1.9s infinite steps(2,end)}
+  .glitch::after{color:var(--cyan);clip-path:inset(10% 0 55% 0);transform:translate(3px,-2px);
+    animation:gl2 1.6s infinite steps(2,end)}
+  @keyframes gl1{0%,88%,100%{clip-path:inset(55% 0 10% 0)}90%{clip-path:inset(5% 0 80% 0)}94%{clip-path:inset(70% 0 2% 0)}}
+  @keyframes gl2{0%,84%,100%{clip-path:inset(10% 0 55% 0)}87%{clip-path:inset(80% 0 4% 0)}91%{clip-path:inset(2% 0 88% 0)}}
+  .boot .sub{margin-top:1rem;text-align:center;font-size:.72rem;letter-spacing:.55em;color:var(--dim)}
+  .boot .sub b{color:var(--cyan);font-weight:600}
+  .wrap{text-align:center}
+
+  .nogl{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;
+    padding:2rem;font-size:1rem;letter-spacing:.08em;color:var(--dim);z-index:30}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+
+<div class="hud plate">
+  <div class="t">DISTRICT<em>//</em>NINE</div>
+  <div class="jp">&#38651;&#33021;&#34903;&#21306;</div>
+  <div class="hint"><b>DRAG</b> look &#183; <b>W A S D</b> fly &#183; <b>R / F</b> up-down &#183; <b>SHIFT</b> boost &#183; idle to auto-orbit</div>
+</div>
+<div class="sig plate">PREVIEW &#183; TEST<span>//</span>09</div>
+
+<div class="boot" id="boot">
+  <div class="wrap">
+    <div class="glitch" data-t="DISTRICT 9">DISTRICT 9</div>
+    <div class="sub">NEURAL CITY GRID <b>ONLINE</b></div>
+  </div>
+</div>
+
+<script id="vs" type="x-shader/x-vertex">#version 300 es
+out vec2 vUV;
+void main(){
+  vec2 p = vec2(float((gl_VertexID<<1)&2), float(gl_VertexID&2));
+  vUV = p;
+  gl_Position = vec4(p*2.0-1.0, 0.0, 1.0);
+}
+</script>
+
+<script id="fsScene" type="x-shader/x-fragment">#version 300 es
+precision highp float;
+out vec4 fragColor;
+in vec2 vUV;
+uniform vec2 uRes;
+uniform float uTime;
+uniform vec3 uCam;
+uniform vec3 uF;
+uniform vec3 uR;
+uniform vec3 uU;
+
+const float CS = 26.0;
+
+float hash12(vec2 p){
+  vec3 p3 = fract(vec3(p.xyx)*0.1031);
+  p3 += dot(p3, p3.yzx+33.33);
+  return fract((p3.x+p3.y)*p3.z);
+}
+float vnoise(vec2 p){
+  vec2 i = floor(p), f = fract(p);
+  f = f*f*(3.0-2.0*f);
+  float a = hash12(i), b = hash12(i+vec2(1,0)), c = hash12(i+vec2(0,1)), d = hash12(i+vec2(1,1));
+  return mix(mix(a,b,f.x), mix(c,d,f.x), f.y);
+}
+float fbm2(vec2 p){ return 0.65*vnoise(p) + 0.35*vnoise(p*2.3+11.7); }
+
+float sdBox(vec3 p, vec3 b){
+  vec3 q = abs(p)-b;
+  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+}
+
+struct Hit {
+  float mat;
+  vec3 cellC;
+  vec3 halfA;
+  float top;
+  float hue;
+  vec2 cid;
+};
+
+vec3 neonFromHue(float hue){
+  if(hue < 0.40) return vec3(0.02,0.95,1.0);
+  if(hue < 0.70) return vec3(1.0,0.10,0.32);
+  return vec3(1.0,0.55,0.14);
+}
+
+float mapCity(vec3 p, inout Hit h){
+  float d = 1e9;
+  Hit best;
+  best.mat = 1.0; best.halfA = vec3(1.0); best.cellC = vec3(0.0); best.top = 1.0; best.hue = 0.0; best.cid = vec2(0.0);
+  vec2 cid = floor(p.xz / CS);
+  for(int j=-1;j<=1;j++){
+    for(int i=-1;i<=1;i++){
+      vec2 id = cid + vec2(float(i), float(j));
+      float seed = hash12(id);
+      if(seed < 0.10) continue;
+      vec2 ctr = (id + 0.5) * CS;
+      vec2 q2 = p.xz - ctr;
+      float wx = 5.0 + 6.6 * hash12(id + 3.71);
+      float wz = 5.0 + 6.6 * hash12(id + 8.13);
+      float h1 = 14.0 + 72.0 * pow(hash12(id + 5.21), 1.7);
+      float hue = hash12(id + 6.61);
+      vec3 b1 = vec3(wx*0.5, h1*0.5, wz*0.5);
+      vec3 c1 = vec3(0.0, h1*0.5, 0.0);
+      float dd = sdBox(vec3(q2.x, p.y, q2.y) - c1, b1);
+      if(dd < d){
+        d = dd;
+        best.halfA = b1; best.cellC = vec3(ctr.x,0,ctr.y); best.top = h1; best.hue = hue; best.cid = id;
+      }
+      if(hash12(id + 2.31) > 0.46){
+        float h2 = h1 + 16.0 + 44.0 * hash12(id + 7.71);
+        vec3 b2 = vec3(wx*0.34, (h2-h1)*0.5, wz*0.34);
+        vec3 c2 = vec3(0.0, (h2+h1)*0.5, 0.0);
+        float dd2 = sdBox(vec3(q2.x, p.y, q2.y) - c2, b2);
+        if(dd2 < d){
+          d = dd2;
+          best.halfA = b2; best.cellC = vec3(ctr.x,0,ctr.y); best.top = h2; best.hue = hue; best.cid = id;
+        }
+      }
+    }
+  }
+  h = best;
+  float dg = p.y;
+  if(dg < d){ h.mat = 0.0; return dg; }
+  return d;
+}
+
+vec3 calcNormal(vec3 p){
+  vec2 e = vec2(0.0018, 0.0);
+  Hit hh;
+  return normalize(vec3(
+    mapCity(p+e.xyy, hh) - mapCity(p-e.xyy, hh),
+    mapCity(p+e.yxy, hh) - mapCity(p-e.yxy, hh),
+    mapCity(p+e.yyx, hh) - mapCity(p-e.yyx, hh)));
+}
+
+vec3 skyColor(vec3 rd){
+  float h = clamp(rd.y*0.5+0.5, 0.0, 1.0);
+  vec3 base = mix(vec3(0.020,0.017,0.040), vec3(0.006,0.008,0.020), h);
+  float hor = exp(-abs(rd.y)*6.0);
+  base += hor * vec3(0.10,0.030,0.130);
+  base += hor * vec3(0.020,0.075,0.100) * (0.5+0.5*sin(atan(rd.z,rd.x)*3.0 + uTime*0.05));
+  if(rd.y > 0.02){
+    vec2 cuv = rd.xz / (rd.y + 0.15);
+    float cl = fbm2(cuv*0.9 + vec2(uTime*0.016, uTime*0.009));
+    base += clamp(cl-0.52, 0.0, 1.0) * vec3(0.028,0.020,0.055);
+  }
+  return base;
+}
+
+vec3 carGlowAt(vec3 sp){
+  vec3 g = vec3(0.0);
+  vec3 a = vec3(mod(uTime*22.0, 420.0)-210.0, 24.0, -13.0);
+  vec3 da = sp-a; g += vec3(1.0,0.92,0.78) * exp(-dot(da,da)*0.045) * 1.7;
+  vec3 a2 = vec3(210.0 - mod(uTime*19.0+140.0, 420.0), 24.6, -10.0);
+  vec3 da2 = sp-a2; g += vec3(1.0,0.15,0.22) * exp(-dot(da2,da2)*0.045) * 1.5;
+  vec3 b = vec3(13.0, 40.0, mod(uTime*26.0+90.0, 420.0)-210.0);
+  vec3 db = sp-b; g += vec3(0.5,0.95,1.0) * exp(-dot(db,db)*0.04) * 1.9;
+  vec3 c = vec3(210.0 - mod(uTime*16.0, 420.0), 58.0, 13.0);
+  vec3 dc = sp-c; g += vec3(0.85,0.30,1.0) * exp(-dot(dc,dc)*0.03) * 1.6;
+  return g;
+}
+
+struct Trace { float t; bool hit; vec3 glow; Hit h; };
+
+Trace traceCity(vec3 ro, vec3 rd, float maxd, int steps){
+  float t = 0.12;
+  vec3 glow = vec3(0.0);
+  Hit hh;
+  hh.mat = -1.0;
+  for(int i=0;i<300;i++){
+    if(i >= steps || t > maxd) break;
+    vec3 sp = ro + rd*t;
+    float d = mapCity(sp, hh);
+    glow += carGlowAt(sp) * (exp(-t*0.018) * 0.018);
+    if(d < 0.0012*t){
+      Trace tr; tr.t = t; tr.hit = true; tr.glow = glow; tr.h = hh;
+      return tr;
+    }
+    t += max(d*0.82, 0.012);
+  }
+  Trace tr; tr.t = maxd; tr.hit = false; tr.glow = glow;
+  tr.h.mat = -1.0;
+  return tr;
+}
+
+vec3 shadeBuilding(vec3 p, vec3 n, Hit h){
+  vec3 lp = p - h.cellC;
+  vec3 base = vec3(0.026,0.028,0.040);
+  vec3 ncol = neonFromHue(h.hue);
+  vec3 emis = vec3(0.0);
+
+  if(abs(n.y) < 0.5){
+    float u = (abs(n.x) > 0.5) ? p.z : p.x;
+    float wu = fract(u * 1.15);
+    float wv = fract(p.y * 0.52);
+    float win = step(0.16,wu)*step(wu,0.84)*step(0.20,wv)*step(wv,0.80);
+    vec2 cellIdx = vec2(floor(u*1.15), floor(p.y*0.52)) + h.cid*13.7;
+    float wh = hash12(cellIdx + vec2(3.1,7.7));
+    float lit = step(0.34, wh);
+    float vary = 0.30 + 1.20*hash12(cellIdx*1.61 + 0.7);
+    float hfade = 0.5 + 0.65*clamp(1.0 - p.y/(h.top+6.0), 0.0, 1.0);
+    float fl = 1.0;
+    if(wh > 0.965) fl = 0.45 + 0.55*abs(sin(uTime*7.0 + wh*53.0));
+    vec3 wcol = mix(vec3(1.0,0.70,0.36), vec3(0.62,0.86,1.0), hash12(cellIdx + 2.0));
+    vec3 wterm = win * lit * wcol * vary * hfade * fl * 1.25;
+    if(p.y > 2.3) emis += wterm;
+
+    vec2 ac = abs(lp.xz);
+    vec2 rem = h.halfA.xz - ac;
+    float corner = length(max(rem, vec2(0.0)));
+    float tube = exp(-corner*corner*90.0) * step(1.6, p.y) * (1.0 - step(h.top - 1.0, p.y));
+    float pulse = 0.72 + 0.28*sin(uTime*1.4 + h.cid.x*5.0 + h.cid.y*3.0);
+    emis += tube * ncol * 2.3 * pulse;
+
+    if(hash12(h.cid + 4.41) > 0.74 && abs(n.z) > 0.5){
+      float inx = step(abs(lp.x), h.halfA.x*0.72);
+      float iny = step(h.top*0.52, p.y) * (1.0 - step(h.top*0.86, p.y));
+      float scan = 0.55 + 0.45*sin(p.y*17.0 + uTime*5.0);
+      emis += inx*iny*scan * ncol.yzx * (1.35 + 0.75*sin(uTime*3.3 + h.cid.x*9.0));
+    }
+  } else if(n.y > 0.5 && abs(p.y - h.top) < 0.35){
+    vec2 ac = abs(lp.xz);
+    vec2 inner = h.halfA.xz - ac;
+    float edge = min(inner.x, inner.y);
+    float rim = smoothstep(0.55, 0.0, edge);
+    emis += rim * vec3(0.55,0.95,1.0) * 2.0;
+    base *= 0.55;
+  }
+
+  float amb = 0.28 + 0.50*clamp(n.y*0.5+0.5, 0.0, 1.0);
+  vec3 col = base * amb * vec3(0.9,0.92,1.05);
+  col += emis;
+  return col;
+}
+
+vec3 fogMix(vec3 col, float t, vec3 ro, vec3 p){
+  vec3 fogCol = vec3(0.034,0.026,0.066) + vec3(0.05,0.02,0.06)*exp(-t*0.02);
+  float fA = 1.0 - exp(-t*0.0125);
+  float lowF = exp(-min(ro.y, p.y)*0.022);
+  fA *= 0.62 + 0.38*lowF;
+  return mix(col, fogCol, clamp(fA, 0.0, 1.0));
+}
+
+vec3 shadeHit(Trace tr, vec3 ro, vec3 rd){
+  vec3 p = ro + rd*tr.t;
+  if(tr.h.mat < 0.5){
+    vec3 rn = normalize(vec3(
+      (fbm2(p.xz*0.5+vec2(0.09,0.0)) - fbm2(p.xz*0.5-vec2(0.09,0.0)))*-0.9,
+      1.0,
+      (fbm2(p.xz*0.5+vec2(0.0,0.09)) - fbm2(p.xz*0.5-vec2(0.0,0.09)))*-0.9));
+    vec3 base = vec3(0.015,0.016,0.024);
+    float puddle = smoothstep(0.30, 0.72, fbm2(p.xz*0.055 + 3.3));
+    vec3 refCol;
+    vec3 rr = reflect(rd, rn);
+    rr.y = max(rr.y, 0.015);
+    rr = normalize(rr);
+    Trace r2 = traceCity(p + rn*0.05, rr, 130.0, 46);
+    if(r2.hit){
+      vec3 p2 = p + rn*0.05 + rr*r2.t;
+      if(r2.h.mat < 0.5) refCol = vec3(0.020,0.022,0.030);
+      else refCol = shadeBuilding(p2, calcNormal(p2), r2.h);
+      refCol = fogMix(refCol, r2.t, p, p2);
+    } else {
+      refCol = skyColor(rr);
+    }
+    refCol += r2.glow * 8.0;
+    float fres = 0.05 + 0.95*pow(1.0 - clamp(dot(-rd, rn), 0.0, 1.0), 5.0);
+    vec3 col = mix(base, refCol, fres * (0.30 + 0.68*puddle));
+    col += carGlowAt(p) * 0.4;
+    return col;
+  }
+  vec3 n = calcNormal(p);
+  return shadeBuilding(p, n, tr.h);
+}
+
+void main(){
+  vec2 uv = (gl_FragCoord.xy*2.0 - uRes) / uRes.y;
+  vec3 rd = normalize(uR*uv.x + uU*uv.y + uF*1.62);
+  vec3 ro = uCam;
+
+  Trace tr = traceCity(ro, rd, 340.0, 102);
+  vec3 col;
+  if(tr.hit){
+    col = shadeHit(tr, ro, rd);
+    col = fogMix(col, tr.t, ro, ro+rd*tr.t);
+  } else {
+    col = skyColor(rd);
+  }
+  col += tr.glow * 9.0;
+  fragColor = vec4(col, 1.0);
+}
+</script>
+
+<script id="fsQuad" type="x-shader/x-fragment">#version 300 es
+precision highp float;
+out vec4 fragColor;
+in vec2 vUV;
+uniform sampler2D uTex;
+uniform vec2 uTexel;
+uniform int uMode;
+uniform vec3 uDir;
+uniform float uThresh;
+void main(){
+  vec3 c = texture(uTex, vUV).rgb;
+  if(uMode == 1){
+    float l = dot(c, vec3(0.2126,0.7152,0.0722));
+    float knee = 0.55;
+    float s = clamp((l - uThresh)/knee, 0.0, 1.0);
+    fragColor = vec4(c * s * s, 1.0);
+    return;
+  }
+  if(uMode == 2){
+    vec3 acc = c*0.2270270270;
+    vec2 o1 = uDir.xy*uTexel*1.3846153846;
+    vec2 o2 = uDir.xy*uTexel*3.2307692308;
+    acc += (texture(uTex, vUV+o1).rgb + texture(uTex, vUV-o1).rgb)*0.3162162162;
+    acc += (texture(uTex, vUV+o2).rgb + texture(uTex, vUV-o2).rgb)*0.0702702703;
+    fragColor = vec4(acc, 1.0);
+    return;
+  }
+  fragColor = vec4(c, 1.0);
+}
+</script>
+
+<script id="fsComp" type="x-shader/x-fragment">#version 300 es
+precision highp float;
+out vec4 fragColor;
+in vec2 vUV;
+uniform sampler2D uScene;
+uniform sampler2D uBloomH;
+uniform sampler2D uBloomQ;
+uniform vec2 uRes;
+uniform float uTime;
+
+float hash12(vec2 p){
+  vec3 p3 = fract(vec3(p.xyx)*0.1031);
+  p3 += dot(p3, p3.yzx+33.33);
+  return fract((p3.x+p3.y)*p3.z);
+}
+vec3 aces(vec3 x){
+  return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14), 0.0, 1.0);
+}
+void main(){
+  vec2 uv = vUV;
+  vec2 c = uv - 0.5;
+
+  float row = floor(uv.y*42.0);
+  float seed = hash12(vec2(row, floor(uTime*8.0)));
+  float act = step(0.945, seed);
+  float shift = (hash12(vec2(row, floor(uTime*8.0)+5.0))-0.5)*0.055*act;
+
+  float ca = 0.0024 + act*0.007;
+  vec3 col;
+  col.r = texture(uScene, uv - c*ca + vec2(shift,0.0)).r;
+  col.g = texture(uScene, uv + vec2(shift,0.0)).g;
+  col.b = texture(uScene, uv + c*ca + vec2(shift,0.0)).b;
+
+  col += texture(uBloomH, uv).rgb * 0.72;
+  col += texture(uBloomQ, uv).rgb * 0.66;
+
+  vec2 ru = vec2(uv.x*19.0, uv.y*15.0);
+  ru.x += ru.y*0.24 + uTime*0.9;
+  vec2 rc = floor(ru);
+  float rh = hash12(rc);
+  float spd = 5.5 + fract(rh*17.0)*5.0;
+  float yy = fract(ru.y - uTime*spd + rh*13.0);
+  float streak = smoothstep(0.0,0.16,yy) * smoothstep(0.55,0.32,yy);
+  streak *= 0.35 + 0.65*step(0.5, abs(fract(ru.x)-0.5)*2.0);
+  col += streak * step(0.90, rh) * vec3(0.55,0.72,0.95) * 0.055;
+
+  col *= 1.30;
+  col = aces(col);
+
+  float v = 1.0 - 0.32*dot(c,c)*2.2;
+  col *= clamp(v,0.0,1.0);
+  col += (hash12(gl_FragCoord.xy + fract(uTime)*17.0) - 0.5) * 0.045;
+  col *= 1.0 - 0.045*(0.5+0.5*sin(uv.y*uRes.y*3.14159));
+
+  fragColor = vec4(col, 1.0);
+}
+</script>
+
+<script>
+(function(){
+  "use strict";
+  var canvas = document.getElementById("gl");
+  var gl = canvas.getContext("webgl2", {antialias:false, alpha:false, powerPreference:"high-performance"});
+  if(!gl){
+    var msg = document.createElement("div");
+    msg.className = "nogl";
+    msg.innerHTML = "DISTRICT NINE needs WebGL2.<br>Enable hardware acceleration and reload.";
+    document.body.appendChild(msg);
+    return;
+  }
+  var HDR = !!gl.getExtension("EXT_color_buffer_float");
+
+  function compile(type, src){
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
+      console.error(gl.getShaderInfoLog(s));
+      throw new Error("shader compile failed");
+    }
+    return s;
+  }
+  function program(vsrc, fsrc){
+    var p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vsrc));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fsrc));
+    gl.linkProgram(p);
+    if(!gl.getProgramParameter(p, gl.LINK_STATUS)){ console.error(gl.getProgramInfoLog(p)); throw new Error("link failed"); }
+    return p;
+  }
+  var VS = document.getElementById("vs").textContent;
+  var progScene = program(VS, document.getElementById("fsScene").textContent);
+  var progQuad  = program(VS, document.getElementById("fsQuad").textContent);
+  var progComp  = program(VS, document.getElementById("fsComp").textContent);
+
+  var vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+
+  function makeFBO(w, h){
+    var tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    var ifmt = HDR ? gl.RGBA16F : gl.RGBA8;
+    var fmt  = HDR ? gl.HALF_FLOAT : gl.UNSIGNED_BYTE;
+    gl.texImage2D(gl.TEXTURE_2D, 0, ifmt, w, h, 0, gl.RGBA, fmt, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    var fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return {fb:fb, tex:tex, w:w, h:h};
+  }
+  function killFBO(f){
+    if(!f) return;
+    gl.deleteTexture(f.tex); gl.deleteFramebuffer(f.fb);
+  }
+
+  var scene=null, bloomH=null, tmpH=null, bloomQ=null, tmpQ=null;
+  var W=0, H=0;
+  var renderScale = 0.85;
+  function buildTargets(){
+    killFBO(scene); killFBO(bloomH); killFBO(tmpH); killFBO(bloomQ); killFBO(tmpQ);
+    scene  = makeFBO(W,H);
+    bloomH = makeFBO(Math.max(2,W>>1), Math.max(2,H>>1));
+    tmpH   = makeFBO(Math.max(2,W>>1), Math.max(2,H>>1));
+    bloomQ = makeFBO(Math.max(2,W>>2), Math.max(2,H>>2));
+    tmpQ   = makeFBO(Math.max(2,W>>2), Math.max(2,H>>2));
+  }
+  function resize(){
+    var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    var w = Math.max(2, Math.floor(canvas.clientWidth  * dpr * renderScale));
+    var h = Math.max(2, Math.floor(canvas.clientHeight * dpr * renderScale));
+    var budget = 2600000;
+    var px = w*h;
+    if(px > budget){ var k = Math.sqrt(budget/px); w = Math.floor(w*k); h = Math.floor(h*k); }
+    if(w === W && h === H) return;
+    W = w; H = h;
+    canvas.width = W; canvas.height = H;
+    buildTargets();
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  var yaw = 0.0, pitch = -0.045;
+  var cam = [0.0, 14.0, 30.0];
+  var keys = {};
+  var lastInput = performance.now();
+
+  window.addEventListener("keydown", function(e){
+    if(["KeyW","KeyA","KeyS","KeyD","KeyR","KeyF","ShiftLeft","ShiftRight","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].indexOf(e.code) >= 0){
+      keys[e.code] = true; lastInput = performance.now();
+      if(e.code === "Space") e.preventDefault();
+    }
+  });
+  window.addEventListener("keyup", function(e){ keys[e.code] = false; });
+  var dragging = false, lx = 0, ly = 0;
+  canvas.addEventListener("pointerdown", function(e){ dragging = true; lx = e.clientX; ly = e.clientY; canvas.classList.add("dragging"); canvas.setPointerCapture(e.pointerId); lastInput = performance.now(); });
+  canvas.addEventListener("pointerup",   function(){ dragging = false; canvas.classList.remove("dragging"); });
+  canvas.addEventListener("pointermove", function(e){
+    if(!dragging) return;
+    var dx = e.clientX - lx, dy = e.clientY - ly;
+    lx = e.clientX; ly = e.clientY;
+    yaw   -= dx * 0.0034;
+    pitch -= dy * 0.0030;
+    if(pitch >  1.30) pitch =  1.30;
+    if(pitch < -1.30) pitch = -1.30;
+    lastInput = performance.now();
+  });
+
+  function u(prog, name){ return gl.getUniformLocation(prog, name); }
+  var uS = {
+    res: u(progScene,"uRes"), time: u(progScene,"uTime"), cam: u(progScene,"uCam"),
+    f: u(progScene,"uF"), r: u(progScene,"uR"), uu: u(progScene,"uU")
+  };
+  var uQ = { tex: u(progQuad,"uTex"), texel: u(progQuad,"uTexel"), mode: u(progQuad,"uMode"), dir: u(progQuad,"uDir"), thresh: u(progQuad,"uThresh") };
+  var uC = { scene: u(progComp,"uScene"), bh: u(progComp,"uBloomH"), bq: u(progComp,"uBloomQ"), res: u(progComp,"uRes"), time: u(progComp,"uTime") };
+
+  function drawQuadTo(fbo){
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo ? fbo.fb : null);
+    gl.viewport(0,0,fbo?fbo.w:W, fbo?fbo.h:H);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  function useTex(unit, tex, loc){
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.uniform1i(loc, unit);
+  }
+
+  function camBasis(){
+    var cp = Math.cos(pitch), sp = Math.sin(pitch);
+    var cy = Math.cos(yaw), sy = Math.sin(yaw);
+    var F = [sy*cp, sp, -cy*cp];
+    var rx = -F[2], rz = F[0];
+    var rl = Math.hypot(rx, rz) || 1; rx/=rl; rz/=rl;
+    var R = [rx, 0, rz];
+    var U = [
+      R[1]*F[2] - R[2]*F[1],
+      R[2]*F[0] - R[0]*F[2],
+      R[0]*F[1] - R[1]*F[0]
+    ];
+    return [F, R, U];
+  }
+
+  function stepCam(dt, now){
+    var boost = (keys.ShiftLeft || keys.ShiftRight) ? 2.6 : 1.0;
+    var sp = 24 * boost;
+    var b = camBasis(), F = b[0], R = b[1];
+    var moved = false;
+    function mv(v, s){ cam[0]+=v[0]*s; cam[1]+=v[1]*s; cam[2]+=v[2]*s; moved = true; }
+    if(keys.KeyW || keys.ArrowUp)    mv(F,  sp*dt);
+    if(keys.KeyS || keys.ArrowDown)  mv(F, -sp*dt);
+    if(keys.KeyD || keys.ArrowRight) mv(R,  sp*dt);
+    if(keys.KeyA || keys.ArrowLeft)  mv(R, -sp*dt);
+    if(keys.KeyR)                    mv([0,1,0], sp*0.8*dt);
+    if(keys.KeyF)                    mv([0,1,0], -sp*0.8*dt);
+    if(moved) lastInput = now;
+    if(now - lastInput > 4000){ yaw += dt * 0.045; }
+    if(cam[1] < 1.7) cam[1] = 1.7;
+    if(cam[1] > 150) cam[1] = 150;
+    if(cam[0] >  420) cam[0] =  420; if(cam[0] < -420) cam[0] = -420;
+    if(cam[2] >  420) cam[2] =  420; if(cam[2] < -420) cam[2] = -420;
+  }
+
+  var frameT = performance.now();
+  var t0 = performance.now();
+  var emaDt = 16;
+  var lastScaleTune = 0;
+  var paused = false;
+  document.addEventListener("visibilitychange", function(){ paused = document.hidden; lastInput = performance.now(); });
+
+  function frame(){
+    requestAnimationFrame(frame);
+    if(paused) return;
+    var now = performance.now();
+    var dt = Math.min((now - frameT)/1000, 0.1);
+    frameT = now;
+    emaDt = emaDt*0.94 + (dt*1000)*0.06;
+    if(now - lastScaleTune > 1600){
+      if(emaDt > 30 && renderScale > 0.5){ renderScale -= 0.08; resize(); lastScaleTune = now; }
+      else if(emaDt < 14 && renderScale < 1.0){ renderScale += 0.06; resize(); lastScaleTune = now; }
+    }
+    stepCam(dt, now);
+    var t = (now - t0)/1000;
+    var b = camBasis();
+
+    gl.useProgram(progScene);
+    gl.uniform2f(uS.res, W, H);
+    gl.uniform1f(uS.time, t);
+    gl.uniform3f(uS.cam, cam[0], cam[1], cam[2]);
+    gl.uniform3f(uS.f, b[0][0], b[0][1], b[0][2]);
+    gl.uniform3f(uS.r, b[1][0], b[1][1], b[1][2]);
+    gl.uniform3f(uS.uu, b[2][0], b[2][1], b[2][2]);
+    drawQuadTo(scene);
+
+    gl.useProgram(progQuad);
+    useTex(0, scene.tex, uQ.tex);
+    gl.uniform1i(uQ.mode, 1);
+    gl.uniform1f(uQ.thresh, HDR ? 0.85 : 0.6);
+    drawQuadTo(bloomH);
+
+    gl.uniform1i(uQ.mode, 2);
+    gl.uniform2f(uQ.texel, 1/bloomH.w, 1/bloomH.h);
+    useTex(0, bloomH.tex, uQ.tex); gl.uniform3f(uQ.dir, 1,0,0); drawQuadTo(tmpH);
+    useTex(0, tmpH.tex, uQ.tex);   gl.uniform3f(uQ.dir, 0,1,0); drawQuadTo(bloomH);
+
+    useTex(0, bloomH.tex, uQ.tex); gl.uniform1i(uQ.mode, 0); drawQuadTo(bloomQ);
+    gl.uniform1i(uQ.mode, 2);
+    gl.uniform2f(uQ.texel, 1/bloomQ.w, 1/bloomQ.h);
+    useTex(0, bloomQ.tex, uQ.tex); gl.uniform3f(uQ.dir, 1,0,0); drawQuadTo(tmpQ);
+    useTex(0, tmpQ.tex, uQ.tex);   gl.uniform3f(uQ.dir, 0,1,0); drawQuadTo(bloomQ);
+
+    gl.useProgram(progComp);
+    useTex(0, scene.tex, uC.scene);
+    useTex(1, bloomH.tex, uC.bh);
+    useTex(2, bloomQ.tex, uC.bq);
+    gl.uniform2f(uC.res, W, H);
+    gl.uniform1f(uC.time, t);
+    drawQuadTo(null);
+  }
+
+  var boot = document.getElementById("boot");
+  setTimeout(function(){ boot.classList.add("gone"); }, 2600);
+  setTimeout(function(){ if(boot.parentNode) boot.parentNode.removeChild(boot); }, 4200);
+
+  frame();
+})();
+</script>
+</body>
+</html>
