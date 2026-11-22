@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Strip // Pixel City Simulator | dannyahn</title>
+<meta name="description" content="An isometric pixel-art Las Vegas Strip simulator in the spirit of classic city builders: every famous casino hand-built from tiles, with day/night, neon, fountains, the Sphere LED shell, fireworks and hovercars. One HTML file, pure Canvas 2D.">
+<meta name="theme-color" content="#0b0e18">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sc-green:#26d94f; --sc-cyan:#3fd6ff; --sc-amber:#ffbd3c; --sc-red:#ff4d63;
+    --panel:#0a1020; --panel-line:#1d2f4f;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; overflow:hidden; background:#05060c; }
+  body{ font-family:'Press Start 2P', monospace; -webkit-font-smoothing:none; }
+  #stage{ position:fixed; inset:0; cursor:grab; touch-action:none; }
+  #stage.dragging{ cursor:grabbing; }
+  canvas#scr{ position:absolute; inset:0; width:100%; height:100%; image-rendering:pixelated; image-rendering:crisp-edges; }
+
+  .plate{ background:rgba(6,10,22,.88); border:2px solid var(--panel-line); border-radius:0; box-shadow:0 0 0 2px #000, 0 6px 26px rgba(0,0,0,.6); color:#cfe0ff; }
+  .hud{ position:fixed; z-index:20; pointer-events:none; }
+
+  #title{ top:10px; left:10px; padding:10px 12px; }
+  #title .t1{ font-size:11px; color:var(--sc-green); text-shadow:0 0 8px rgba(38,217,79,.5); }
+  #title .t2{ font-size:7px; margin-top:6px; color:#8fa3c8; line-height:1.8; }
+  #title .t2 b{ color:var(--sc-cyan); font-weight:normal; }
+
+  #ticker{ top:10px; right:10px; padding:8px 10px; font-size:7px; line-height:2; color:var(--sc-amber); text-align:right; }
+  #ticker span{ color:#7d8fb5; }
+
+  #toolbar{ bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:6px; pointer-events:auto; padding:8px; }
+  .btn{ font-family:inherit; font-size:8px; color:#cfe0ff; background:#101a30; border:2px solid #2a4066; border-bottom:4px solid #060b16; padding:9px 11px; cursor:pointer; letter-spacing:.05em; }
+  .btn:hover{ border-color:var(--sc-cyan); color:#fff; }
+  .btn:active{ border-bottom-width:2px; transform:translateY(2px); }
+  .btn.on{ color:#04101e; background:var(--sc-green); border-color:var(--sc-green); }
+
+  #card{ bottom:64px; left:10px; width:min(320px,88vw); padding:12px 13px; display:none; pointer-events:none; }
+  #card.show{ display:block; }
+  #card .cbar{ height:6px; margin:-12px -13px 10px; }
+  #card .cname{ font-size:9px; color:#fff; line-height:1.6; }
+  #card .cmeta{ font-size:7px; margin-top:8px; color:var(--sc-amber); line-height:1.9; }
+  #card .cfact{ font-size:7px; margin-top:8px; color:#9fb2d8; line-height:2.1; }
+
+  #hint{ bottom:10px; right:10px; padding:8px 10px; font-size:6.5px; color:#7186ad; line-height:2; text-align:right; }
+  #hint b{ color:var(--sc-cyan); font-weight:normal; }
+
+  #boot{ position:fixed; inset:0; z-index:40; background:#05060c; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; transition:opacity .8s ease; }
+  #boot.gone{ opacity:0; pointer-events:none; }
+  #boot .logo{ font-size:15px; color:var(--sc-green); text-shadow:0 0 12px rgba(38,217,79,.55); text-align:center; line-height:2; }
+  #boot .sub{ font-size:7px; color:#67799e; }
+  @media (max-width:640px){ #title .t2{ display:none; } #hint{ display:none; } .btn{ padding:9px 8px; font-size:7px; } }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="scr"></canvas></div>
+
+<div class="hud plate" id="title">
+  <div class="t1">SIM//CITY OF THE STRIP</div>
+  <div class="t2">LAS VEGAS &middot; NEVADA &middot; <b>PIXEL EDITION</b><br>BUILT FROM TILES &middot; CANVAS 2D</div>
+</div>
+<div class="hud plate" id="ticker">METRO POP <span id="pop">0</span><br>VISITORS/YR <span>~40M</span><br>MODE <span id="modetxt">DAY</span></div>
+<div class="hud plate" id="card"><div class="cbar" id="cardbar"></div><div class="cname" id="cardname"></div><div class="cmeta" id="cardmeta"></div><div class="cfact" id="cardfact"></div></div>
+<div class="hud plate" id="hint"><b>DRAG</b> pan &middot; <b>SCROLL</b> zoom &middot; <b>CLICK</b> a casino<br><b>N</b> night &middot; <b>F</b> fireworks &middot; <b>H</b> hide hud</div>
+<div class="hud" id="toolbar">
+  <button class="btn" id="bNight">NIGHT</button>
+  <button class="btn" id="bFire">FIREWORKS</button>
+  <button class="btn" id="bZoom">ZOOM</button>
+  <button class="btn" id="bHome">HOME</button>
+</div>
+<div id="boot"><div class="logo">SIM//CITY<br>OF THE STRIP</div><div class="sub">GENERATING 4.2 MILES OF PIXEL NEVADA ...</div></div>
+
+<script>
+(() => {
+'use strict';
+
+// ================= pixel canvas =================
+const scr = document.getElementById('scr');
+let ctx = scr.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+let S = 4;                      // art px -> screen scale (integer zoom step)
+const ZOOMS = [3, 4, 6];
+let zi = 0;
+S = ZOOMS[zi];
+let W = 0, H = 0;
+function fit(){
+  zi = Math.max(0, Math.min(ZOOMS.length-1, zi));
+  S = ZOOMS[zi];
+  W = Math.ceil(innerWidth / S); H = Math.ceil(innerHeight / S);
+  scr.width = W; scr.height = H;
+  ctx = scr.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  clampCam();
+}
+
+// ================= isometric projection =================
+const TW = 12, TH = 6;          // tile half-width / half-height in art px
+const MAXH = 130;               // tallest sprite (STRAT)
+const WX0 = -6, WX1 = 48, WY0 = -14, WY1 = 14;   // world tile bounds
+const MGAP = 110;                                 // backdrop margin for mountains/sky
+const OX = -(WX0 - WY1) * TW + 10 + MGAP;
+const OY = -(WX0 + WY0) * TH + MAXH + 10 + MGAP;
+const WW = (WX1 - WY0) * TW - (WX0 - WY1) * TW + 20 + 2*MGAP;
+const WH = (WX1 + WY1) * TH - (WX0 + WY0) * TH + MAXH + 20 + 2*MGAP;
+const px2 = (x, y) => [ (x - y) * TW + OX, (x + y) * TH + OY ];
+
+const cam = { x: 0, y: 0 };
+function clampCam(){
+  cam.x = Math.max(0, Math.min(WW - W, cam.x));
+  cam.y = Math.max(0, Math.min(WH - H, cam.y));
+}
+function homeCam(){ const p = px2(13, 0.5); cam.x = p[0] - W/2; cam.y = p[1] - H*0.62; clampCam(); }
+
+// ================= util =================
+function hash(n){ let s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+function pick(a, r){ return a[Math.floor((r === undefined ? Math.random() : r) * a.length) % a.length]; }
+function rr(g, x, y, w, h, c){ g.fillStyle = c; g.fillRect(x|0, y|0, w, h); }
+function lerp(a, b, t){ return a + (b - a) * t; }
+
+// ================= day / night palettes =================
+const DAY = {
+  sky:['#7ec8e3','#8fd0e0','#a8d8dd','#c9e2d8','#e6e2c9'],
+  haze:'#e8d8b0', desert:'#d9b98a', desert2:'#cfad7d', desert3:'#e2c396',
+  road:'#52545e', road2:'#4a4c56', walk:'#b0a48c', curb:'#8d8471',
+  lake:'#4fa8c9', lake2:'#3d8fb4',
+  winDay:'#ffffff', winDayA:0.25,
+  star:0, beam:0, head:0, neonAlpha:.55
+};
+const NGT = {
+  sky:['#070a18','#0a1024','#0d1630','#111c3a','#16224a'],
+  haze:'#1a2247', desert:'#39405e', desert2:'#333a56', desert3:'#424a6a',
+  road:'#15171f', road2:'#111319', walk:'#262a3c', curb:'#1d2130',
+  lake:'#0d2740', lake2:'#0a1e33',
+  winDay:'#0a0c14', winDayA:1,
+  star:1, beam:1, head:1, neonAlpha:1
+};
+let night = 1, nightT = 1;
+const CY='#00e8ff', MG='#ff2e6a', AM='#ffbd3c', PU='#b07aff', GN='#52e07a', WT='#eef4ff', RD='#e0384a';
+const PAL = {
+  gold:  { top:'#f2cf6b', l:'#c99a35', r:'#a97c26' },
+  goldD: { top:'#e8c05a', l:'#b3873a', r:'#8d682c' },
+  glass: { top:'#7fd4e0', l:'#4c93a6', r:'#3a7385' },
+  glassN:{ top:'#27455c', l:'#1a2f42', r:'#132231' },
+  white: { top:'#f0efe6', l:'#b8b6ab', r:'#97958b' },
+  brick: { top:'#c96b4a', l:'#97492f', r:'#7c3b26' },
+  gray:  { top:'#b8bcc8', l:'#82879a', r:'#696e80' },
+  green: { top:'#3fae62', l:'#2c7d47', r:'#23623a' },
+  greenD:{ top:'#2e8f50', l:'#22693c', r:'#1a5330' },
+  cream: { top:'#e8d9ae', l:'#b0a077', r:'#8f8160' },
+  burg:  { top:'#a83a52', l:'#7c2838', r:'#641f2d' },
+  sand:  { top:'#e0c08d', l:'#b08d55', r:'#8f7244' },
+  silver:{ top:'#d7dde8', l:'#9aa2b4', r:'#7d8598' },
+  steel: { top:'#8fa2b8', l:'#5f7186', r:'#4a596c' },
+  plum:  { top:'#7a4f96', l:'#593670', r:'#462a59' },
+  dark:  { top:'#3a4258', l:'#272d3e', r:'#1d2230' }
+};
+const neonOf = [CY, MG, AM, PU, GN, CY, WT, MG, AM, CY];
+function palN(p){ const n = NGT.desert; // darken for night
+  function dk(hex, k){ const v = parseInt(hex.slice(1),16); const r=(v>>16)&255,g=(v>>8)&255,b=v&255;
+    return 'rgb('+Math.round(r*k)+','+Math.round(g*k)+','+Math.round(b*k)+')'; }
+  return { top:dk(p.top,.45), l:dk(p.l,.4), r:dk(p.r,.36) };
+}
+function palNow(p){ return nightT > .5 ? palN(p) : p; }
+function skyPal(){ if(nightT > .5) return NGT.sky; return DAY.sky; }
+
+// ================= casino data (real Strip, south -> north) =================
+// y>0 = far row (west), y<0 = near row (east)
+const CASINOS = [
+ { id:0,  n:'MANDALAY BAY', x:1,  y:6,  w:2, d:2, h:62, p:PAL.glassN, neon:AM, year:1999, rooms:'~3,700', fact:'Smallest of the big south-end resorts, but its beach club pool is legendary. The dark glass tower keeps the desert sun honest.' },
+ { id:1,  n:'LUXOR', x:5,  y:7,  pad:[3,5,9,10], pyr:52, p:PAL.sand, neon:AM, year:1993, rooms:'~4,400', beam:true, fact:'The 30-story black-glass pyramid. Its sky beams are visible from space - astronauts reportedly called them the most visible human structure at night.' },
+ { id:2,  n:'EXCALIBUR', x:8, y:7,  w:2, d:2, h:26, cast:true, p:PAL.stone||PAL.silver, neon:PU, year:1990, rooms:'~4,000', fact:'The pink-and-grey storybook castle that proved a theme-park hotel could out-tower the Strip. It kicked off the mega-resort era.' },
+ { id:3,  n:'NEW YORK-NEW YORK', x:11, y:7, w:2, d:2, h:22, ny:true, p:PAL.steel, neon:CY, year:1997, rooms:'~4,700', coaster:true, fact:'Manhattan shrunk to 1/3 scale, complete with a roller coaster that threads the skyline. The Empire pays out in the skyline, not the rooms.' },
+ { id:4,  n:'TROPICANA', x:14, y:6, w:2, d:2, h:18, p:PAL.cream, neon:MG, year:1957, rooms:'~1,900', fact:'The last resort built on the site of the old Flamingo airstrip runway. In 2024 it imploded its own tower to rebuild - the pixel one is load-bearing.' },
+ { id:5,  n:'FLAMINGO', x:16.5, y:6, w:2, d:2, h:14, p:PAL.cream, neon:GN, year:1946, rooms:'~3,700', fact:'Bugsy Siegel opened it in 1946; everyone says it "put Vegas on the map." It promptly lost money and Siegel lost his life six months later.' },
+ { id:6,  n:'PARIS', x:19, y:7, w:2, d:2, h:30, eiffel:true, p:PAL.brick, neon:RD, year:1981, rooms:'~3,000', fact:'Half-scale Eiffel Tower, 541 ft, with an observation deck and a bakery that allegedly makes real French bread. Scandalous in 1981.' },
+ { id:7,  n:"CAESARS PALACE", x:21.5, y:7, w:3, d:2, h:28, p:PAL.white, neon:RD, year:1966, rooms:'~3,500', fount:4, fact:'Opened 1966 as the first mega-resort on a shoestring - and invented the free high-stakes gambler suite. The fountains dance to Celine.' },
+ { id:8,  n:'THE CROMWELL', x:23.8, y:6, w:1, d:1, h:12, p:PAL.burg, neon:AM, year:2014, rooms:'~190', fact:'A tiny boutique casino squeezed between Caesars and Bellagio - the one slot of land on the whole Strip nobody could buy out of.' },
+ { id:9,  n:'BELLAGIO', x:25.5, y:7, w:3, d:2, h:52, curve:true, p:PAL.white, neon:GN, year:1998, rooms:'~3,900', fount:14, fact:'Built in a hole that used to hold Mirage\'s volcano lake. Its fountain lake doubles as a 32-acre water recycling reservoir for the resort.' },
+ { id:10, n:'COSMOPOLITAN', x:28.5, y:7, w:2, d:2, h:44, wedge:true, p:PAL.green, neon:GN, year:2010, rooms:'~3,000', fact:'Two kinked glass towers angled so every room gets a Strip view. Built for $4B, sold for $1.7B two years later. Ouch.' },
+ { id:11, n:'PARK MGM', x:17, y:-7, w:2, d:2, h:34, p:PAL.greenD, neon:GN, year:1993, rooms:'~2,800', fact:'Born as the MGM Grand, sold to Cirque du Soleil as "Mandalay Place"-adjacent Monte Carlo, now a betting-free-ish rebrand. Three identities in one tower.' },
+ { id:12, n:'SPHERE', x:18.5, y:-12, w:2, d:2, h:0, sphere:true, p:PAL.dark, neon:CY, year:2023, rooms:'17,600 seats', fact:'The Exosphere: 1.2M square feet of LED, the largest screen ever built. Costs roughly $275K per night just in pixels.' },
+ { id:13, n:'ARIA', x:30.5, y:7, w:2, d:2, h:48, wave:true, p:PAL.silver, neon:WT, year:2009, rooms:'~4,000', fact:'The flowing white glass tower of CityCenter, opened in the worst of the crash. Its valet tower once parked cars 17 stories up by robot.' },
+ { id:14, n:'VDARA', x:32.5, y:6, w:1, d:1, h:40, p:PAL.silver, neon:WT, year:2009, rooms:'~1,500', fact:'America\'s tallest all-suite, no-casino hotel tower - a condo-hotel that Vegas didn\'t know what to do with when it opened.' },
+ { id:15, n:'TRUMP', x:24, y:-7, w:1, d:1, h:50, p:PAL.gold, neon:AM, year:2008, rooms:'~1,100', fact:'Gold everything, including the elevator buttons. Opened to the Great Recession and quietly carried CityCenter\'s finances for years.' },
+ { id:16, n:'FASHION SHOW', x:21, y:-6, w:2, d:2, h:16, p:PAL.glass, neon:WT, year:1981, rooms:'mall', fact:'Not a casino - the mall the Strip built so tourists could buy the same brands as everywhere else, but with a 150 ft Ferris wheel inside.' },
+ { id:17, n:'ENCORE', x:27, y:-7, w:1, d:1, h:56, p:PAL.gold, neon:AM, year:2008, rooms:'~2,100', fact:'The mirror-tower sibling of Wynn across the street, connected by a tram tunnel. Built in 20 months for $2.6B.' },
+ { id:18, n:'WYNN', x:34, y:7, w:2, d:2, h:58, curve:true, p:PAL.gold, neon:AM, year:2005, rooms:'~1,700', fact:'Steve Wynn bet the company on a non-themed luxury tower after Disney cancelled his Disneyland-like "Wynn Vegas." He was right.' },
+ { id:19, n:'VENETIAN', x:30, y:-8, w:3, d:2, h:36, campanile:true, p:PAL.brick, neon:RD, year:1999, rooms:'~4,000 suites', fact:'All-suite mega-palace with indoor canals under a painted fake-sky ceiling that dims to simulate evening. The fake sky beat the real one for years.' },
+ { id:20, n:'STRAT', x:37, y:-7, w:1, d:1, h:110, needle:true, p:PAL.steel, neon:MG, year:1996, rooms:'~700', fact:'At 1,149 ft it is the tallest freestanding structure on the west side of the Mississippi and still Vegas\'s tallest building 30 years on.' },
+ { id:21, n:'MGM GRAND', x:3, y:-7, w:2, d:2, h:46, p:PAL.green, neon:RD, year:1993, rooms:'~6,900', fact:'Emerald glass and a lion you can walk through. When it opened it was the largest hotel in the world - it has changed hands at the top zero times.' },
+ { id:22, n:'CIRCUS CIRCUS', x:6, y:-6, w:2, d:1, h:12, p:PAL.burg, neon:CY, year:1968, rooms:'~450', fact:'The big top with the world\'s largest chair (guests sit in it and get photographed). Slot machines are rigged as carnival games; 1,000,001 tickets.' },
+ { id:23, n:'HARRAH\'S', x:12, y:-7, w:2, d:2, h:30, p:PAL.plum, neon:PU, year:1937, rooms:'~730', fact:'Started as a single bingo hall in 1937. The hotel tower is from 1973, when it was the tallest building between the Mississippi and LA.' },
+ { id:24, n:'PLANET HOLLYWOOD', x:14.5, y:6.5, w:1, d:1, h:26, p:PAL.gray, neon:CY, year:1963, rooms:'~2,500', fact:'The Aladdin until 2007. Its slot layout once used a math trick that made high-denomination slots "near-miss" more often than low.' },
+ { id:25, n:'LINQ + HIGH RROLLER', x:15.5, y:-8, w:1, d:1, h:14, wheel:true, p:PAL.gray, neon:CY, year:2014, rooms:'~740', fact:'Home of the High Roller: 550 ft tall, the world\'s tallest observation wheel for years. One rotation = 30 minutes, one beer, then one more rotation.' },
+ { id:26, n:'THE MIRAGE', x:9.5, y:-6.5, w:1, d:1, h:24, p:PAL.sand, neon:AM, year:1989, rooms:'~1,500', fact:'The first "mega-resort" - Steve Wynn\'s volcano hotel that ate Caesars\' lunch and reset Vegas from gambling halls to themed resorts. Demolished 2025 for Hard Rock\'s guitar tower; the pixels keep the volcano.' },
+ { id:27, n:'BALLY\'S/HORSESHOE', x:10.5, y:-8, w:1, d:1, h:26, p:PAL.gray, neon:MG, year:1973, rooms:'~2,800', fact:'Built as the Holiday Inn Casino, renamed twice, now owned by Caesars with a Cincinnati sports-bar skin. The Strip collects layers.' }
+];
+CASINOS[2].p = PAL.silver;
+
+// ================= owner grid for click picking =================
+const OWN = new Map();
+const key = (x,y)=> x+'|'+y;
+
+// ================= world bake =================
+let worldCan = null;
+function drawColTile(g, gx, gy, h, pal, opts){
+  opts = opts || {};
+  if(h <= 0) return;
+  const [X, Y] = px2(gx + .5, gy + .5);
+  const x0 = X - TW, x1 = X + TW, yb = Y + TH, yt = Y - TH;
+  const top = pal.top, lc = pal.l, rc = pal.r;
+  // right face (E->S)
+  g.beginPath(); g.moveTo(x1, Y - h); g.lineTo(X, yb - h); g.lineTo(X, yb); g.lineTo(x1, Y); g.closePath();
+  g.fillStyle = rc; g.fill();
+  // left face (S->W)
+  g.beginPath(); g.moveTo(x0, Y - h); g.lineTo(X, yb - h); g.lineTo(X, yb); g.lineTo(x0, Y); g.closePath();
+  g.fillStyle = lc; g.fill();
+  // top diamond
+  g.beginPath(); g.moveTo(X, yt - h); g.lineTo(x1, Y - h); g.lineTo(X, yb - h); g.lineTo(x0, Y - h); g.closePath();
+  g.fillStyle = top; g.fill();
+  // windows: dot grid on both faces
+  const nT = Math.floor((h - 4) / 5), nS = 3;
+  for(let f = 0; f < 2; f++){
+    for(let r = 0; r < nT; r++){
+      for(let c = 0; c < nS; c++){
+        const u = (c + .5) / nS;
+        const vh = h - 3 - r * 5;
+        if(vh < 4) continue;
+        let wx, wy;
+        if(f === 0){ // right face: from W corner (x0,Y) to S corner (X,yb)
+          wx = lerp(x0, X, u) + 1; wy = lerp(Y, yb, u) - vh;
+        } else {      // left face: from S (X,yb) to E (x1,Y)
+          wx = lerp(X, x1, u) + 1; wy = lerp(yb, Y, u) - vh;
+        }
+        const seed = gx * 71 + gy * 31 + r * 7 + c * 3 + f * 57 + (opts.id||0) * 13;
+        if(hash(seed) > .42){
+          rr(g, wx, wy, 2, 3, nightT > .5 ? (hash(seed*3.7) > .82 ? AM : WT) : (hash(seed*3.7) > .5 ? '#dfe8f2' : '#2a3140'));
+        } else {
+          rr(g, wx, wy, 2, 3, nightT > .5 ? '#131826' : '#39445c');
+        }
+      }
+    }
+  }
+}
+
+function addOwner(gx, gy, c){ OWN.set(key(gx,gy), c); }
+
+function bakeWorld(){
+  worldCan = document.createElement('canvas');
+  worldCan.width = WW; worldCan.height = WH;
+  const g = worldCan.getContext('2d');
+  const pal = nightT > .5 ? NGT : DAY;
+
+  // ---- backdrop: sky gradient + stars + moon + mountain ridges beyond map edges ----
+  const corner = px2(WX0, WY0);
+  const grd = g.createLinearGradient(0, 0, 0, corner[1] + 30);
+  if(nightT > .5){ grd.addColorStop(0, '#03040a'); grd.addColorStop(.6, '#0a1128'); grd.addColorStop(1, '#1c2547'); }
+  else { grd.addColorStop(0, '#79c4e2'); grd.addColorStop(.6, '#a5d4e2'); grd.addColorStop(1, '#ecd9ab'); }
+  g.fillStyle = grd; g.fillRect(0, 0, WW, WH);
+  if(nightT > .5){
+    for(let i = 0; i < 300; i++){
+      const sx = hash(i * 13.7) * WW, sy = hash(i * 7.31) * (corner[1] + 130);
+      rr(g, sx, sy, 1, 1, i % 9 === 0 ? WT : '#7e90b8');
+    }
+    const mx = Math.max(20, corner[0] - 120), my = 36;
+    rr(g, mx, my, 10, 10, '#e8ecf4'); rr(g, mx + 2, my + 1, 3, 2, '#c2c8d8'); rr(g, mx + 6, my + 6, 2, 2, '#c2c8d8');
+  } else {
+    rr(g, Math.max(24, corner[0] - 160), 30, 12, 12, '#ffe08a');
+  }
+  function ridge(pA, pB, steps, base, jag, col, seed){
+    g.beginPath(); g.moveTo(pA[0], pA[1]);
+    for(let t = 0; t <= steps; t++){
+      const e = t / steps;
+      const X = lerp(pA[0], pB[0], e);
+      const Y = lerp(pA[1], pB[1], e) - (base + Math.abs(Math.sin(t * jag + seed)) * 26 + hash(t * 3.1 + seed) * 14);
+      g.lineTo(X, Y);
+    }
+    g.lineTo(pB[0], pB[1]); g.closePath(); g.fillStyle = col; g.fill();
+  }
+  const cWp = px2(WX0, WY0), cEp = px2(WX1, WY0), cSp = px2(WX0, WY1);
+  const mFar = nightT > .5 ? '#0c1330' : '#a89274';
+  const mNear = nightT > .5 ? '#161f40' : '#c2a97f';
+  ridge(cWp, cEp, 54, 6, .34, mFar, 1.7);
+  ridge(cWp, cSp, 30, 5, .5, mFar, 5.1);
+  ridge(cWp, cEp, 54, 2, .55, mNear, 9.3);
+  ridge(cWp, cSp, 30, 1, .8, mNear, 2.2);
+
+  // ---- ground tiles ----
+  for(let gy = WY0; gy <= WY1; gy++){
+    for(let gx = WX0; gx <= WX1; gx++){
+      const [X, Y] = px2(gx + .5, gy + .5);
+      const hs = hash(gx * 3.1 + gy * 5.7);
+      let col = hs > .66 ? pal.desert3 : (hs > .33 ? pal.desert : pal.desert2);
+      // boulevard + sidewalks
+      const road = (gy >= -2 && gy <= 2 && gx >= -6 && gx <= 46);
+      const walkW = (gy === 3 || gy === 4 || gy === -3 || gy === -4) && gx >= -6 && gx <= 46;
+      const cross = ((gx === 8 || gx === 18 || gx === 26 || gx === 34) && gy >= -5 && gy <= 5);
+      if(road || cross) col = (gx + gy) % 2 ? pal.road : pal.road2;
+      else if(walkW) col = pal.walk;
+      g.beginPath();
+      g.moveTo(X, Y - TH); g.lineTo(X + TW, Y); g.lineTo(X, Y + TH); g.lineTo(X - TW, Y); g.closePath();
+      g.fillStyle = col; g.fill();
+    }
+  }
+  // lane dashes along the boulevard center
+  for(let gx = -6; gx < 46; gx += 2){
+    const [X, Y] = px2(gx + .5, 0.5);
+    rr(g, X - TW/2 - 1, Y - TH/2, 4, 2, nightT > .5 ? '#8a7b3a' : '#d9c455');
+  }
+  // sidewalk palms (baked)
+  for(let gx = -4; gx < 46; gx += 3){
+    for(const py of [3.6, -3.6]){
+      if(hash(gx * 9.7 + py * 3.3) < .18) continue;
+      if(py > 0 && gx >= 23 && gx <= 27) continue;   // don't plant palms in the Bellagio lake
+      const [X, Y] = px2(gx, py);
+      rr(g, X - 1, Y - 7, 2, 7, nightT > .5 ? '#241f26' : '#6b4a2c');
+      const fr = nightT > .5 ? '#1c4029' : '#2e8b4a';
+      rr(g, X - 4, Y - 9, 3, 2, fr); rr(g, X + 1, Y - 9, 3, 2, fr);
+      rr(g, X - 2, Y - 11, 4, 2, fr); rr(g, X - 1, Y - 8, 2, 2, fr);
+    }
+  }
+  // ---- lake in front of Bellagio (reservoir) ----
+  for(let gy = 3; gy <= 5; gy++) for(let gx = 23.2; gx <= 26.8; gx += .5){
+    const [X, Y] = px2(gx, gy);
+    g.beginPath(); g.moveTo(X, Y-TH); g.lineTo(X+TW, Y); g.lineTo(X, Y+TH); g.lineTo(X-TW, Y); g.closePath();
+    g.fillStyle = ((gx*2+gy) % 2) ? pal.lake : pal.lake2; g.fill();
+  }
+  // monorail rail (east, y=-5) baked
+  for(let gx = -6; gx <= 45; gx++){
+    const [X, Y] = px2(gx, -5.2);
+    rr(g, X - TW/2, Y - 1, TW, 2, nightT > .5 ? '#20242f' : '#5c6270');
+    if(gx % 3 === 0) rr(g, X - 1, Y + 1, 2, 5, nightT > .5 ? '#191d26' : '#494f5c');
+  }
+
+  // ---- casinos: footprint tiles then structures, sorted far -> near ----
+  const order = [...CASINOS].sort((a,b) => (a.x + a.y) - (b.x + b.y));
+  for(const c of order){
+    const pal2 = palNow(c.p);
+    const id = c.id;
+    if(c.pad){ // Luxor slab pad
+      const [px_, py_] = px2((c.pad[0]+c.pad[2])/2 + .5, (c.pad[1]+c.pad[3])/2 + .5);
+      for(let gx = c.pad[0]; gx <= c.pad[2]; gx++) for(let gy = c.pad[1]; gy <= c.pad[3]; gy++){
+        const [X, Y] = px2(gx + .5, gy + .5);
+        g.beginPath(); g.moveTo(X, Y-TH); g.lineTo(X+TW, Y); g.lineTo(X, Y+TH); g.lineTo(X-TW, Y); g.closePath();
+        g.fillStyle = nightT > .5 ? '#2c2416' : '#c9a86e'; g.fill();
+        addOwner(gx, gy, id);
+      }
+    }
+    if(c.pyr){ // LUXOR pyramid = height field by distance to footprint edge
+      const x0 = c.x, x1 = c.x + 3, y0 = c.y, y1 = c.y + 3;
+      for(let gx = x0; gx < x1; gx++) for(let gy = y0; gy < y1; gy++){
+        const dcx = Math.min(gx - x0, x1 - 1 - gx), dcy = Math.min(gy - y0, y1 - 1 - gy);
+        const d = Math.min(dcx, dcy);
+        const h = Math.max(2, Math.round((d + 1) / 2 * c.pyr));
+        const col = pal2;
+        drawColTile(g, gx, gy, h, { top: nightT > .5 ? '#232b1e' : '#d8b45e', l: nightT > .5 ? '#1a2016' : '#a8843c', r: nightT > .5 ? '#141a10' : '#87692e' }, { id });
+        addOwner(gx, gy, id);
+      }
+      continue;
+    }
+    if(c.cast){ // EXCALIBUR castle: 4 turrets + keep
+      const gx = Math.round(c.x), gy = Math.round(c.y);
+      for(let dx = 0; dx < 2; dx++) for(let dy = 0; dy < 2; dy++){
+        const corner = (dx === dy);
+        drawColTile(g, gx + dx, gy + dy, corner ? 42 : 26, pal2, { id });
+        const [X, Y] = px2(gx + dx + .5, gy + dy + .5);
+        const hy = corner ? 42 : 26;
+        rr(g, X - 3, Y - hy - 4, 2, 4, PU); rr(g, X + 1, Y - hy - 4, 2, 4, PU); // battlements
+        addOwner(gx + dx, gy + dy, id);
+      }
+      rrSign(g, c, gx + 1, gy + 1, 6, 3);
+      continue;
+    }
+    if(c.ny){ // NYNY mini skyline
+      const gx = Math.round(c.x), gy = Math.round(c.y);
+      const hs = [46, 30, 38, 24];
+      let i = 0;
+      for(let dx = 0; dx < 2; dx++) for(let dy = 0; dy < 2; dy++){
+        drawColTile(g, gx + dx, gy + dy, hs[i++], pal2, { id });
+        addOwner(gx + dx, gy + dy, id);
+      }
+      // coaster arc
+      const [CX, CY2] = px2(gx + 1.5, gy + 3.2);
+      g.strokeStyle = nightT > .5 ? '#3a3f52' : '#8d93a8'; g.lineWidth = 1;
+      g.beginPath(); g.arc(CX, CY2 - 14, 26, Math.PI * 1.08, Math.PI * 1.92); g.stroke();
+      g.beginPath(); g.arc(CX, CY2 - 14, 24, Math.PI * 1.08, Math.PI * 1.92); g.stroke();
+      c._arc = [CX, CY2 - 14, 25];
+      continue;
+    }
+    if(c.eiffel){ // PARIS tower + slum block
+      const gx = Math.round(c.x), gy = Math.round(c.y);
+      for(let dx = 0; dx < 2; dx++) for(let dy = 0; dy < 2; dy++){
+        drawColTile(g, gx + dx, gy + dy, 20, pal2, { id }); addOwner(gx + dx, gy + dy, id);
+      }
+      // eiffel on back corner
+      const [X, Y] = px2(gx + 1.5, gy + 1.5);
+      const col = nightT > .5 ? '#4a4436' : '#8f8368';
+      const topY = Y - 74;
+      for(let s = 0; s < 9; s++){
+        const w = 11 - s;
+        rr(g, X - w, Y - 6 - s * 8, w * 2, 6, col);
+        rr(g, X - w + 1, Y - 6 - s * 8, w * 2 - 2, 6, nightT > .5 ? '#12100a' : '#c9bfa4');
+      }
+      rr(g, X - 1, topY - 6, 2, 6, col);
+      if(nightT > .5) for(let s = 0; s < 8; s++) if(hash(s * 7 + 3) > .4) rr(g, X - 8 + (s % 4) * 5, Y - 14 - s * 8, 2, 2, WT);
+      rrSign(g, c, gx, gy, 6, 3);
+      continue;
+    }
+    if(c.sphere){ drawSphereBase = [px2(c.x + 1, c.y + 1), 15]; continue; }
+    if(c.needle){ // STRAT
+      const gx = Math.round(c.x), gy = Math.round(c.y);
+      drawColTile(g, gx, gy, 10, pal2, { id }); addOwner(gx, gy, id);
+      const [X, Y] = px2(gx + .5, gy + .5);
+      rr(g, X - 1, Y - 104, 3, 96, nightT > .5 ? '#39415a' : '#a8b0c4');
+      rr(g, X - 4, Y - 96, 9, 10, nightT > .5 ? '#454e6a' : '#c2cadf');
+      rr(g, X - 2, Y - 110, 5, 7, nightT > .5 ? '#454e6a' : '#c2cadf');
+      c._light = [X, Y - 113];
+      continue;
+    }
+    if(c.wheel){ // LINQ + High Roller
+      const gx = Math.round(c.x), gy = Math.round(c.y);
+      drawColTile(g, gx, gy, 14, pal2, { id }); addOwner(gx, gy, id);
+      const [X, Y] = px2(gx + 1.7, gy + 1.2);
+      g.strokeStyle = nightT > .5 ? '#39415a' : '#aeb6c8'; g.lineWidth = 1;
+      g.beginPath(); g.arc(X, Y - 26, 16, 0, 7); g.stroke();
+      rr(g, X - 1, Y - 10, 2, 10, nightT > .5 ? '#39415a' : '#8d93a8');
+      c._wheel = [X, Y - 26, 16];
+      continue;
+    }
+    if(c.campanile){ // VENETIAN long block + campanile
+      const gx = Math.round(c.x), gy = Math.round(c.y);
+      for(let dx = 0; dx < 3; dx++) for(let dy = 0; dy < 2; dy++){
+        drawColTile(g, gx + dx, gy + dy, 30 + (dx % 2) * 4, pal2, { id }); addOwner(gx + dx, gy + dy, id);
+      }
+      const [X, Y] = px2(gx + 2.5, gy + 2.5);
+      rr(g, X - 2, Y - 66, 5, 60, nightT > .5 ? '#4a4136' : '#d8c9a8');
+      rr(g, X - 3, Y - 72, 7, 6, RD); rr(g, X - 2, Y - 76, 5, 4, RD);
+      rrSign(g, c, gx + 1, gy, 7, 3);
+      continue;
+    }
+    if(c.curve){ // WYNN / BELLAGIO: stepped curve top
+      const gx = Math.round(c.x), gy = Math.round(c.y);
+      let i = 0;
+      for(let dx = 0; dx < c.w; dx++) for(let dy = 0; dy < c.d; dy++){
+        const hh = c.h - ((c.w - 1 - dx) * (c.w - 1 - dx)) * 1.8;
+        drawColTile(g, gx + dx, gy + dy, Math.max(10, hh), pal2, { id }); addOwner(gx + dx, gy + dy, id);
+        i++;
+      }
+      rrSign(g, c, gx + c.w - 1, gy, 6, 3);
+      continue;
+    }
+    if(c.wave){ // ARIA wave top
+      const gx = Math.round(c.x), gy = Math.round(c.y);
+      for(let dx = 0; dx < 2; dx++) for(let dy = 0; dy < 2; dy++){
+        const hh = c.h + Math.sin((dx * 2 + dy) * 1.6) * 6;
+        drawColTile(g, gx + dx, gy + dy, hh, pal2, { id }); addOwner(gx + dx, gy + dy, id);
+      }
+      rrSign(g, c, gx + 1, gy, 6, 3);
+      continue;
+    }
+    if(c.wedge){ // COSMO kinked
+      const gx = Math.round(c.x), gy = Math.round(c.y);
+      drawColTile(g, gx, gy, c.h, pal2, { id });
+      drawColTile(g, gx + 1, gy, c.h - 8, pal2, { id });
+      drawColTile(g, gx, gy + 1, c.h - 5, pal2, { id });
+      drawColTile(g, gx + 1, gy + 1, c.h - 14, pal2, { id });
+      for(let dx = 0; dx < 2; dx++) for(let dy = 0; dy < 2; dy++) addOwner(gx + dx, gy + dy, id);
+      rrSign(g, c, gx + 1, gy, 6, 3);
+      continue;
+    }
+    if(c.fount && c.id === 7){ // CAESARS: wings + front low rise
+      const gx = Math.round(c.x), gy = Math.round(c.y);
+      for(let dx = 0; dx < 3; dx++) for(let dy = 0; dy < 2; dy++){
+        const hh = (dx === 1) ? 32 : 26;
+        drawColTile(g, gx + dx, gy + dy, hh, pal2, { id }); addOwner(gx + dx, gy + dy, id);
+      }
+      const [X, Y] = px2(gx + 1.5, gy - .2);
+      rr(g, X - 14, Y - 8, 28, 8, nightT > .5 ? '#3a2c2e' : '#e0d2b0');
+      rr(g, X - 14, Y - 10, 28, 2, RD);
+      rrSign(g, c, gx + 1, gy, 7, 3);
+      continue;
+    }
+    // generic slab
+    const gx = Math.round(c.x), gy = Math.round(c.y);
+    for(let dx = 0; dx < c.w; dx++) for(let dy = 0; dy < c.d; dy++){
+      const hh = c.h - (dx + dy) * 2 * (hash(id * 13 + dx * 7 + dy) > .5 ? 1 : 0);
+      drawColTile(g, gx + dx, gy + dy, hh, pal2, { id }); addOwner(gx + dx, gy + dy, id);
+    }
+    rrSign(g, c, gx + c.w - 1, gy + c.d - 1, 6, 3);
+  }
+
+  function rrSign(g2, c, gx, gy, w2, h2){
+    if(h2 < 3) return;
+    const [X, Y] = px2(gx + .5, gy + c.d);
+    rr(g2, X - w2/2, Y - 12, w2, h2 + 2, nightT > .5 ? '#0c0f18' : '#2a2e3a');
+    rr(g2, X - w2/2 + 1, Y - 11, w2 - 2, h2, c.neon);
+    (c._signs = c._signs || []).push([X, Y - 11, w2 - 2, h2]);
+  }
+}
+let drawSphereBase = null;
+
+// ================= dynamic bits =================
+const cars = [];
+for(let i = 0; i < 26; i++){
+  cars.push({ x: Math.random() * 52 - 6, lane: Math.random() < .5 ? -1.1 : 1.1, dir: 0, col: [MG, CY, AM, WT, PU, GN][i % 6], spd: 2.6 + hash(i) * 2.4 });
+}
+cars.forEach(c => c.dir = c.lane > 0 ? 1 : -1);
+let train = { x: 4 };
+let coaster = { t: 0 };
+let wheelA = 0;
+const fireworks = [];
+const planes = [{ x: -40, y: -30, dir: 1 }];
+let fountPhase = 0;
+
+function spawnFirework(){
+  const gx = 4 + Math.random() * 30, gy = (Math.random() < .5 ? 6 : -6);
+  const [X, Y] = px2(gx, gy);
+  const col = [MG, CY, AM, PU, WT, GN][Math.floor(Math.random() * 6)];
+  const P = [];
+  for(let i = 0; i < 46; i++){
+    const a = i / 46 * Math.PI * 2, sp = 14 + hash(i + T * 7) * 16;
+    P.push({ x: X, y: Y - 95 - hash(i * 3.3) * 30, vx: Math.cos(a) * sp * .55, vy: Math.sin(a) * sp * .38 - 6, l: 34 + hash(i * 9) * 16 });
+  }
+  fireworks.push({ P, col });
+}
+
+// ================= twinkle anchors =================
+const twinkles = [];
+for(let i = 0; i < 220; i++){
+  const c = CASINOS[Math.floor(Math.random() * CASINOS.length)];
+  if(c.sphere) continue;
+  twinkles.push({ c, u: Math.random(), v: Math.random(), ph: Math.random() * 10 });
+}
+
+// ================= sky (world canvas carries the painted backdrop now) =================
+function drawSky(g, t){
+  rr(g, 0, 0, W, H, nightT > .5 ? '#04050d' : '#8fc9dc');
+}
+
+// ================= main draw of dynamics =================
+const dyn = [];
+function pushDyn(depth, fn){ dyn.push([depth, fn]); }
+
+function drawDynamics(g, t){
+  dyn.length = 0;
+  // sphere LED shell
+  if(drawSphereBase){
+    const [sp, R] = drawSphereBase;
+    const X = sp[0] - cam.x, Y = sp[1] - cam.y;
+    pushDyn(18.5 - 12 + .5, () => {
+      g.fillStyle = nightT > .5 ? '#10131d' : '#9aa2ae';
+      g.beginPath(); g.arc(X, Y - R - 2, R, 0, 7); g.fill();
+      // lat rings
+      for(let lat = -4; lat <= 4; lat++){
+        const ry2 = lat / 4.6;
+        const ringR = R * Math.cos(Math.asin(ry2));
+        const yy = Y - R - 2 - R * ry2;
+        for(let u = 0; u < 26; u++){
+          const lng = u / 26 * Math.PI * 2 + t * .0;
+          const zz = Math.cos(lng);
+          if(zz < -.15) continue;
+          const xx = X + ringR * Math.sin(lng);
+          let col;
+          if(nightT > .5){
+            const wave = Math.sin(u * .9 + Math.sin(t * .5) * 3 + lat * .8 + t * 1.8);
+            const pal2 = ['#00e8ff', '#ff2e6a', '#ffbd3c', '#b07aff', '#52e07a', '#eef4ff'];
+            col = pal2[Math.abs(Math.floor(wave * 2.4 + 3)) % 6];
+            g.globalAlpha = .5 + .5 * Math.abs(wave);
+          } else { g.globalAlpha = .55; col = '#5a626e'; }
+          rr(g, xx - 1, yy - 1, 2, 2, col);
+        }
+      }
+      g.globalAlpha = 1;
+    });
+  }
+  // Luxor beams
+  const lux = CASINOS[1];
+  const lb = px2(lux.x + 2, lux.y + 2);
+  pushDyn(lux.x + lux.y + 4, () => {
+    if(nightT < .4) return;
+    const X = lb[0] - cam.x, Y = lb[1] - cam.y - 52 - 20;
+    const sway = Math.sin(t * .4) * 6;
+    for(let i = -1; i <= 1; i++){
+      const grd = g.createLinearGradient(0, Y, 0, 0);
+      grd.addColorStop(0, 'rgba(255,255,255,' + (nightT * .5) + ')');
+      grd.addColorStop(1, 'rgba(180,220,255,0)');
+      g.fillStyle = grd;
+      g.beginPath();
+      g.moveTo(X - 1 + i * 2, Y); g.lineTo(X - 5 + i * 3 + sway * (1 - i), 0); g.lineTo(X + 1 + i * 3 + sway * (1 - i), 0); g.lineTo(X + 1 + i * 2, Y);
+      g.closePath(); g.fill();
+    }
+  });
+  // Bellagio + Caesars fountains
+  for(const c of CASINOS){
+    if(!c.fount) continue;
+    const base = px2(c.x + c.w/2, c.y - 1.5);
+    pushDyn(c.x + c.y - 1.5, () => {
+      const n = c.fount;
+      for(let i = 0; i < n; i++){
+        const u = (i + .5) / n;
+        const X = base[0] - cam.x + lerp(-30, 30, u);
+        const Y = base[1] - cam.y + 2;
+        const ph = fountPhase * 1.7 + i * .55 + c.id * 2;
+        const hgt = 4 + Math.abs(Math.sin(ph)) * (c.id === 9 ? 22 : 9);
+        const col = i % 3 === 0 ? '#bfeaff' : '#8fd8f2';
+        g.globalAlpha = .8;
+        rr(g, X, Y - hgt, 1, hgt, col);
+        if(Math.sin(ph) > .85) rr(g, X - 1, Y - hgt - 2, 3, 2, '#e8f8ff');
+        g.globalAlpha = 1;
+      }
+    });
+  }
+  // High Roller rotation
+  const lin = CASINOS[25];
+  if(lin._wheel){
+    const [wx, wy, wr] = lin._wheel;
+    pushDyn(lin.x + lin.y + 2.5, () => {
+      const X = wx - cam.x, Y = wy - cam.y;
+      for(let k = 0; k < 8; k++){
+        const a = wheelA + k / 8 * Math.PI * 2;
+        rr(g, X + Math.cos(a) * wr - 1, Y + Math.sin(a) * wr - 1, 3, 3, k % 2 ? CY : MG);
+      }
+    });
+  }
+  // NYNY coaster cars
+  const ny = CASINOS[3];
+  if(ny._arc){
+    const [ax, ay, ar] = ny._arc;
+    pushDyn(ny.x + ny.y + 3.5, () => {
+      for(let k = 0; k < 3; k++){
+        const a = Math.PI * 1.15 + ((coaster.t + k * .1) % 1) * Math.PI * .7;
+        rr(g, ax + Math.cos(a) * ar - cam.x - 1, ay + Math.sin(a) * ar - cam.y, 3, 2, k % 2 ? RD : AM);
+      }
+    });
+  }
+  // monorail train
+  const tp = px2(train.x, -5.2);
+  pushDyn(train.x - 5.2, () => {
+    const X = tp[0] - cam.x, Y = tp[1] - cam.y;
+    for(let k = 0; k < 3; k++){
+      const [bx, by] = [X - k * 11, Y - 6];
+      rr(g, bx, by, 9, 4, nightT > .5 ? '#5a6070' : '#c8ccd8');
+      if(nightT > .5) rr(g, bx + 1, by + 1, 7, 1, AM);
+    }
+    rr(g, X + 9, Y - 5, 2, 1, WT);
+  });
+  // cars
+  for(const c of cars){
+    const cp = px2(c.x, c.lane);
+    pushDyn(c.x + c.lane, () => {
+      const X = cp[0] - cam.x, Y = cp[1] - cam.y;
+      rr(g, X - 2, Y - 1, 5, 2, c.col);
+      rr(g, X - 1, Y - 2, 3, 1, nightT > .5 ? '#1a2030' : '#39445c');
+      if(nightT > .5){
+        rr(g, c.dir > 0 ? X + 3 : X - 3, Y - 1, 1, 1, '#fff6c8');
+        rr(g, c.dir > 0 ? X - 3 : X + 3, Y - 1, 1, 1, '#ff5a5a');
+      }
+    });
+  }
+  // STRAT blinking light
+  const strat = CASINOS[20];
+  if(strat._light){
+    const [lx, ly] = strat._light;
+    pushDyn(strat.x + strat.y, () => {
+      if(Math.sin(t * 3) > 0) rr(g, lx - cam.x - 1, ly - cam.y, 2, 2, '#ff4d4d');
+    });
+  }
+  dyn.sort((a, b) => a[0] - b[0]);
+  for(const d of dyn) d[1]();
+  // night window twinkles
+  if(nightT > .5){
+    for(const tw of twinkles){
+      const c = tw.c;
+      const gx = c.x + tw.u * (c.w || 2), gy = c.y + tw.v * (c.d || 2);
+      const [X, Y] = px2(gx, gy);
+      const on = Math.sin(t * (.8 + tw.ph * .4) + tw.ph * 20) > .55;
+      if(on) rr(g, X - cam.x + (tw.u * 14 | 0) - 6, Y - cam.y - 6 - (tw.v * 16 | 0), 2, 2, hash(tw.ph * 99) > .8 ? MG : (hash(tw.ph * 51) > .5 ? AM : WT));
+    }
+    // neon sign blinkers
+    for(const c of CASINOS){
+      if(!c._signs) continue;
+      const on = Math.sin(t * 2.2 + c.id * 1.7) > -.3;
+      if(!on) continue;
+      for(const s of c._signs){
+        g.globalAlpha = .75;
+        rr(g, s[0] - cam.x, s[1] - cam.y, s[2], s[3], c.neon);
+        g.globalAlpha = 1;
+      }
+    }
+  }
+  // planes
+  for(const p of planes){
+    const pp = px2(p.x, p.y);
+    const X = pp[0] - cam.x * .5 - 200, Y = Math.max(6, pp[1] - cam.y * .4 + 20);
+    rr(g, X, Y, 3, 1, '#39445c');
+    if(nightT > .5 && Math.sin(t * 6) > 0) rr(g, X, Y, 1, 1, '#ff4d4d');
+  }
+  // fireworks
+  for(let i = fireworks.length - 1; i >= 0; i--){
+    const fw = fireworks[i];
+    let alive = 0;
+    for(const p of fw.P){
+      p.x += p.vx * .16; p.y += p.vy * .16; p.vy += 22 * .16; p.l -= 1;
+      if(p.l > 0 && p.x > cam.x - 10 && p.x < cam.x + W + 10){
+        alive++;
+        rr(g, p.x - cam.x, p.y - cam.y, 1, 1, p.l > 14 ? fw.col : '#8a8f9c');
+      }
+    }
+    if(!alive) fireworks.splice(i, 1);
+  }
+}
+
+// ================= picking =================
+function pickAt(mx, my){
+  const wx = mx + cam.x, wy = my + cam.y;
+  const fx = (wx - OX) / TW, fy = (wy - OY) / TH;
+  const x = Math.floor((fy + fx) / 2 + .5), y = Math.floor((fy - fx) / 2 + .5);
+  return OWN.get(key(x, y));
+}
+const card = document.getElementById('card');
+function showCard(c){
+  document.getElementById('cardbar').style.background = c.neon;
+  document.getElementById('cardname').textContent = c.n;
+  document.getElementById('cardmeta').textContent = 'EST ' + c.year + '  //  ' + c.rooms;
+  document.getElementById('cardfact').textContent = c.fact;
+  card.classList.add('show');
+}
+
+// ================= input =================
+const stage = document.getElementById('stage');
+let drag = null, moved = 0;
+stage.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY, cam.x, cam.y]; moved = 0; stage.classList.add('dragging'); });
+window.addEventListener('pointermove', e => {
+  if(!drag) return;
+  cam.x = drag[2] - (e.clientX - drag[0]) / S;
+  cam.y = drag[3] - (e.clientY - drag[1]) / S;
+  moved += Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0);
+  clampCam();
+});
+window.addEventListener('pointerup', e => {
+  if(drag && moved < 8){
+    const id = pickAt(e.clientX / S + 0, e.clientY / S + 0);
+    if(id !== undefined) showCard(CASINOS[id]); else card.classList.remove('show');
+  }
+  drag = null; stage.classList.remove('dragging');
+});
+scr.addEventListener('wheel', e => {
+  e.preventDefault();
+  zi = Math.max(0, Math.min(ZOOMS.length - 1, zi + (e.deltaY > 0 ? 1 : -1)));
+  fit();
+}, { passive: false });
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if(k === 'n') toggleNight();
+  if(k === 'f') { spawnFirework(); spawnFirework(); spawnFirework(); }
+  if(k === 'h') document.querySelectorAll('.hud').forEach(h => h.style.visibility = (h.style.visibility === 'hidden' ? '' : 'hidden'));
+});
+function toggleNight(){
+  night = night ? 0 : 1;
+  nightT = night;
+  document.getElementById('bNight').textContent = night ? 'DAY' : 'NIGHT';
+  document.getElementById('bNight').classList.toggle('on', !!night);
+  document.getElementById('modetxt').textContent = night ? 'NEON' : 'DAY';
+  bakeWorld();
+}
+document.getElementById('bNight').addEventListener('click', toggleNight);
+document.getElementById('bFire').addEventListener('click', () => { spawnFirework(); spawnFirework(); });
+document.getElementById('bZoom').addEventListener('click', () => { zi = (zi + 1) % ZOOMS.length; fit(); });
+document.getElementById('bHome').addEventListener('click', () => { card.classList.remove('show'); homeCam(); });
+window.addEventListener('resize', () => { fit(); });
+
+// ================= pop ticker =================
+let popCur = 0; const popTarget = 2348478;
+const popEl = document.getElementById('pop');
+
+// ================= main loop =================
+let T = 0, last = 0, autoFire = 0;
+fit(); homeCam(); bakeWorld();
+document.getElementById('bNight').classList.add('on');
+document.getElementById('bNight').textContent = 'DAY';
+document.getElementById('modetxt').textContent = 'NEON';
+
+function frame(ts){
+  const dt = Math.min(.08, (ts - last) / 1000 || .016); last = ts;
+  T += dt; fountPhase += dt; wheelA += dt * .22; coaster.t = (coaster.t + dt * .35) % 1;
+  train.x = ((train.x + dt * 2.2) % 54) - 6;
+  for(const c of cars){ c.x += c.dir * c.spd * dt * .32; if(c.x > 48) c.x = -6; if(c.x < -8) c.x = 46; }
+  planes[0].x += dt * 1.1; if(planes[0].x > 70) planes[0].x = -40;
+  autoFire -= dt;
+  if(night && autoFire <= 0 && Math.random() < .4){ spawnFirework(); autoFire = 1.6 + Math.random() * 2.6; }
+  if(popCur < popTarget){ popCur = Math.min(popTarget, popCur + Math.ceil((popTarget - popCur) * .04) + 37); popEl.textContent = popCur.toLocaleString('en-US'); }
+
+  ctx.imageSmoothingEnabled = false;
+  drawSky(ctx, T);
+  if(worldCan) ctx.drawImage(worldCan, -Math.round(cam.x), -Math.round(cam.y));
+  drawDynamics(ctx, T);
+  requestAnimationFrame(frame);
+}
+
+// boot
+bakeWorld();
+setTimeout(() => {
+  document.getElementById('boot').classList.add('gone');
+  const b = CASINOS[1]; showCard(b);
+  for(let i = 0; i < 3; i++) setTimeout(spawnFirework, i * 420);
+}, 900);
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>
