@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LV.STRIP // ORBITAL RECON — danny ahn</title>
+<style>
+  :root { --ink:#cfe3ff; --dim:#5f7ba6; --hot:#37e6ff; --amber:#ffc14d; --bg:#04070f; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); font-family:'JetBrains Mono','Courier New',monospace; }
+  #stage { position:fixed; inset:0; }
+  #map { position:absolute; inset:0; width:100%; height:100%; cursor:grab; }
+  #map.drag { cursor:grabbing; }
+
+  .hud { position:fixed; pointer-events:none; z-index:10; color:var(--ink); opacity:.82; }
+  .corner { position:fixed; width:26px; height:26px; border:2px solid rgba(95,123,166,.55); z-index:11; pointer-events:none; }
+  .c-tl { top:10px; left:10px; border-right:0; border-bottom:0; }
+  .c-tr { top:10px; right:10px; border-left:0; border-bottom:0; }
+  .c-bl { bottom:10px; left:10px; border-right:0; border-top:0; }
+  .c-br { bottom:10px; right:10px; border-left:0; border-top:0; }
+
+  #topbar { top:0; left:0; right:0; display:flex; justify-content:space-between; padding:14px 44px; font-size:11px; letter-spacing:.14em; }
+  #topbar .id { color:var(--hot); }
+  #topbar .coord { color:var(--dim); }
+  #titlebox { top:52px; left:44px; }
+  #titlebox h1 { font-size:clamp(20px,3vw,34px); font-weight:700; letter-spacing:.22em; color:var(--ink); text-shadow:0 0 18px rgba(55,230,255,.35); }
+  #titlebox h1 .slash { color:var(--hot); }
+  #titlebox .sub { margin-top:6px; font-size:10px; letter-spacing:.3em; color:var(--dim); }
+  #legend { bottom:56px; left:44px; font-size:10px; letter-spacing:.12em; line-height:2; color:var(--dim); }
+  #legend b { color:var(--ink); font-weight:400; }
+  .dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:7px; box-shadow:0 0 8px currentColor; vertical-align:1px; }
+  #controls { bottom:56px; right:44px; text-align:right; pointer-events:auto; }
+  #controls button { display:block; margin-left:auto; margin-bottom:8px; background:rgba(10,18,36,.72); border:1px solid var(--dim); color:var(--ink); font-family:inherit; font-size:10px; letter-spacing:.18em; padding:8px 14px; cursor:pointer; transition:.18s; }
+  #controls button:hover, #controls button.on { border-color:var(--hot); color:var(--hot); box-shadow:0 0 14px rgba(55,230,255,.28); }
+  #feed { top:150px; right:44px; width:230px; font-size:9px; letter-spacing:.1em; color:var(--dim); line-height:1.9; text-align:right; opacity:.85; }
+  #feed .ok { color:#59ffa8; }
+  #feed .hot { color:var(--hot); }
+  #card { position:fixed; z-index:12; display:none; min-width:250px; background:rgba(5,10,24,.92); border:1px solid var(--dim); padding:14px 16px; color:var(--ink); font-size:10px; letter-spacing:.12em; line-height:1.9; box-shadow:0 0 34px rgba(0,0,0,.7); }
+  #card h3 { font-size:13px; letter-spacing:.2em; margin-bottom:6px; }
+  #card .row { color:var(--dim); }
+  #card .row b { color:var(--ink); font-weight:400; }
+  #card .x { position:absolute; top:6px; right:9px; cursor:pointer; color:var(--dim); pointer-events:auto; }
+  #attr { bottom:12px; left:0; right:0; text-align:center; font-size:8px; letter-spacing:.12em; color:#3d537a; }
+  #boot { position:fixed; inset:0; background:var(--bg); z-index:50; display:flex; align-items:center; justify-content:center; flex-direction:column; transition:opacity 1s; }
+  #boot .l { font-size:12px; letter-spacing:.4em; color:var(--hot); }
+  #boot .bar { margin-top:18px; width:260px; height:2px; background:#12233f; }
+  #boot .bar i { display:block; height:100%; width:0%; background:var(--hot); box-shadow:0 0 12px var(--hot); transition:width .35s; }
+  #help { top:52px; right:44px; text-align:right; font-size:9px; color:var(--dim); letter-spacing:.14em; line-height:2; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="map"></canvas></div>
+
+<div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+
+<div class="hud" id="topbar">
+  <span class="id">AHN-03 // LV.CORRIDOR.INTEL</span>
+  <span class="coord" id="coordline">36.1130 N / 115.1753 W &nbsp; Z--</span>
+</div>
+
+<div class="hud" id="titlebox">
+  <h1>THE STRIP <span class="slash">//</span> NIGHT OPS</h1>
+  <div class="sub">SATELLITE BASEMAP + NEON TELEMETRY — LAS NEVADA CORRIDOR</div>
+</div>
+
+<div class="hud" id="help">DRAG — PAN &nbsp;·&nbsp; WHEEL — ZOOM<br>CLICK NODE — DOSSIER</div>
+
+<div class="hud" id="feed"></div>
+
+<div class="hud" id="legend">
+  <div><b>SECTOR SCAN</b></div>
+  <div><span class="dot" style="color:#37e6ff;background:#37e6ff"></span>RESORT NODE</div>
+  <div><span class="dot" style="color:#ffc14d;background:#ffc14d"></span>LUXOR / PARIS LIGHT BEAM</div>
+  <div><span class="dot" style="color:#59ffa8;background:#59ffa8"></span>BELLAGIO HYDRO-JETS</div>
+  <div><span class="dot" style="color:#ff5ea8;background:#ff5ea8"></span>STRAT PYRO GRID</div>
+</div>
+
+<div class="hud" id="controls">
+  <button id="btnGrade" class="on">NIGHT GRADE</button>
+  <button id="btnHD">HD CORE</button>
+  <button id="btnWide">WIDE SECTOR</button>
+  <button id="btnHome">RETURN TO CORE</button>
+</div>
+
+<div id="card"><span class="x" id="cardx">✕</span><h3 id="cardname">—</h3><div id="cardbody"></div></div>
+
+<div id="attr">IMAGERY © ESRI, MAXAR, EARTHSTAR GEOGRAPHICS · GEO DATA © OPENSTREETMAP CONTRIBUTORS · ANALYSIS: DANNY AHN</div>
+
+<div id="boot"><div class="l">ACQUIRING SATELLITE LOCK…</div><div class="bar"><i id="bootbar"></i></div></div>
+
+<script>
+"use strict";
+window.onerror = function (m, s, l, c) { try { localStorage.setItem("t13err", m + " @" + l + ":" + c); } catch (e) { } };
+// ---------- geo -> world px (fixed z18 web-mercator pixels) ----------
+const R = 256 * Math.pow(2, 18);
+const X18 = lng => (lng + 180) / 360 * R;
+const Y18 = lat => (1 - Math.asinh(Math.tan(lat * Math.PI / 180)) / Math.PI) / 2 * R;
+
+// basemap placement corners (world px at z18) — LO mosaic was z17 px, so corners x512 and size x2
+const LO = { x: 23596.60177777778 * 512, y: 51400.732742453664 * 512, w: 9694, h: 15693 };
+const HD = { x: 47201.93991111111 * 256, y: 102824.90304122941 * 256, w: 3728, h: 6461 };
+
+// ---------- resorts: geo from OSM/Nominatim, roof heights ~ published ----------
+const R0 = [
+ ["STRAT",          36.14741, -115.15552, 308, "#ff4d6d", "observation+drop rides", 1],
+ ["CIRCUS CIRCUS",  36.13772, -115.16584, 110, "#ffd23f", "adventure dome", 1],
+ ["FONTAINEBLEAU",  36.13742, -115.15923, 230, "#7fd8ff", "tallest hotel LV", 1],
+ ["WESTGATE",       36.13566, -115.15134, 122, "#c9b6ff", "ex-Hilton, '67 hub", 0],
+ ["LYNX TH",        36.13260, -115.15720, 117, "#b8c6ff", "residential tower", 0],
+ ["WYNN",           36.12662, -115.16540, 187, "#ffb86b", "lake + botanica", 1],
+ ["ENCORE",         36.12944, -115.16488, 210, "#ff8fd8", "tower stack", 1],
+ ["TRUMP",          36.12946, -115.17265, 180, "#ffd98a", "gold glass", 1],
+ ["FASHION MALL",   36.12570, -115.17245,  80, "#9d9dff", "retail mass", 0],
+ ["VENETIAN",       36.12103, -115.16831, 152, "#ffb347", "canal complex", 1],
+ ["PALAZZO",        36.12418, -115.16827, 155, "#ff9ecb", "gray tower", 1],
+ ["SPHERE",         36.12121, -115.16207, 111, "#37e6ff", "1.2M px LED shell", 2],
+ ["LVCC",           36.13102, -115.15018,  40, "#6c8cff", "convention grid", 0],
+ ["LINQ",           36.11836, -115.17060, 145, "#62e6ff", "high line wheel", 1],
+ ["HARRAH'S",       36.11930, -115.17116,  90, "#ff9a3d", "colors + bands", 1],
+ ["HORSESHOE",      36.11348, -115.16906, 110, "#ff8f6b", "ex-Bally's", 1],
+ ["FLAMINGO",       36.11643, -115.17236,  80, "#ff5ea8", "est. 1946", 1],
+ ["PARIS",          36.11216, -115.17064, 137, "#ffd9a0", "eiffel 0.5x beam src", 3],
+ ["CAESARS",        36.11663, -115.17676, 146, "#ff6b81", "octavius + forum", 1],
+ ["BELLAGIO",       36.11311, -115.17701, 144, "#6ff2c4", "fountain lake", 4],
+ ["WALDORF",        36.10621, -115.17436, 166, "#d9c7a0", "crystals tower", 1],
+ ["COSMO",          36.11016, -115.17409, 179, "#35e0c8", "led canopy", 1],
+ ["VDARA",          36.10942, -115.17772, 179, "#cfd6ff", "spoon curve", 1],
+ ["ARIA",           36.10703, -115.17800, 147, "#b0c4ff", "skylofts", 1],
+ ["PARK MGM",       36.10475, -115.17526, 140, "#ffc14d", "eclipse tiles", 1],
+ ["NYNY",           36.10214, -115.17449, 100, "#7ea6ff", "skyfall coaster", 1],
+ ["MGM GRAND",      36.10279, -115.16940, 109, "#ffcf40", "gold monolith", 1],
+ ["EXCALIBUR",      36.10887, -115.17561,  92, "#58d6ff", "castle + pyro", 1],
+ ["LUXOR",          36.10957, -115.17581, 107, "#ffe14d", "pyramid, beam src", 5],
+ ["MANDALAY BAY",   36.10225, -115.17582, 108, "#e8b923", "glass + lagoon", 1],
+];
+// NOTE EXCAL/LUXOR/MANDALAY order fix: they are south: lat 36.0989/36.0959/36.0923 below.
+R0[27][1] = 36.09887; // EXCALIBUR
+R0[28][1] = 36.09587; // LUXOR
+R0[29][1] = 36.09225; // MANDALAY BAY
+const RES = R0.map(r => ({ n:r[0], wx:X18(r[2]), wy:Y18(r[1]), h:r[3], c:r[4], tag:r[5], kind:r[6] }));
+
+// Las Vegas Blvd polyline (geo)
+const BLVD = [[36.14741,-115.15552],[36.14150,-115.15980],[36.13560,-115.16410],[36.12960,-115.16470],[36.12480,-115.16630],[36.12090,-115.16960],[36.11820,-115.17100],[36.11620,-115.17260],[36.11260,-115.17620],[36.10800,-115.17520],[36.10300,-115.17500],[36.09890,-115.17560],[36.09590,-115.17580],[36.09230,-115.17590]].map(p => [X18(p[1]), Y18(p[0])]);
+const LAKE = [X18(-115.17460), Y18(36.11450)]; // bellagio fountain lake (approx centroid)
+
+// ---------- canvas / camera ----------
+const cv = document.getElementById("map"), ctx = cv.getContext("2d");
+let W = 0, H = 0, dpr = 1;
+function fit() { dpr = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; }
+fit(); addEventListener("resize", fit);
+
+const cam = { x: X18(-115.1714), y: Y18(36.1142) };
+let s = 0.30;                    // world px per CSS px
+const SMIN = 0.04, SMAX = 6;
+
+// images
+let imgLO = new Image(), imgHD = new Image(), hdReady = false;
+let loaded = 0;
+function step() { loaded++; document.getElementById("bootbar").style.width = Math.min(100, loaded * 50) + "%";
+  if (loaded >= 2) setTimeout(() => { const b = document.getElementById("boot"); b.style.opacity = 0; setTimeout(() => b.remove(), 1100); }, 350); }
+imgLO.onload = step; imgHD.onload = () => { hdReady = true; step(); };
+imgLO.src = "assets/basemap-lo.webp"; imgHD.src = "assets/basemap-hd.webp";
+let imgL2LO = new Image(), imgL2HD = new Image(), l2Ready = false;
+imgL2LO.onload = () => { l2Ready = true; };
+imgL2LO.src = "assets/lights2-lo.webp"; imgL2HD.src = "assets/lights2-hd.webp";
+
+// real arterial geometry (lng, lat)
+const STREETS = [
+  [[-115.1766,36.0893],[-115.1740,36.0989],[-115.1710,36.1090],[-115.1713,36.1181],[-115.1695,36.1283],[-115.1690,36.1433],[-115.1683,36.1520]],
+  [[-115.2050,36.0988],[-115.1400,36.0988]],
+  [[-115.2050,36.1079],[-115.1400,36.1079]],
+  [[-115.2050,36.1181],[-115.1400,36.1181]],
+  [[-115.1950,36.1264],[-115.1500,36.1264]],
+  [[-115.2050,36.1433],[-115.1400,36.1433]],
+  [[-115.1837,36.0900],[-115.1837,36.1500]],
+  [[-115.1648,36.0980],[-115.1640,36.1283]],
+  [[-115.1555,36.0960],[-115.1548,36.1460]],
+  [[-115.1500,36.0980],[-115.1500,36.1440]],
+];
+const CROSS = [
+  [-115.1740,36.0988],[-115.1711,36.1079],[-115.1713,36.1181],[-115.1696,36.1283],[-115.1690,36.1433],
+  [-115.1551,36.1181],[-115.1548,36.1433],[-115.1553,36.1079],
+  [-115.1837,36.0988],[-115.1837,36.1181],[-115.1837,36.1433],[-115.1640,36.1283],
+];
+
+const W2S = (x, y) => [(x - cam.x) * s + W / 2, (y - cam.y) * s + H / 2];
+
+// ---------- interaction ----------
+let drag = null;
+cv.addEventListener("mousedown", e => { drag = [e.clientX, e.clientY, cam.x, cam.y]; cv.classList.add("drag"); });
+addEventListener("mousemove", e => { if (!drag) return; cam.x = drag[2] - (e.clientX - drag[0]) / s; cam.y = drag[3] - (e.clientY - drag[1]) / s; clampCam(); });
+addEventListener("mouseup", () => { drag = null; cv.classList.remove("drag"); });
+cv.addEventListener("wheel", e => {
+  e.preventDefault();
+  const [mx, my] = [e.clientX, e.clientY];
+  const wx = cam.x + (mx - W / 2) / s, wy = cam.y + (my - H / 2) / s;
+  s = Math.max(SMIN, Math.min(SMAX, s * Math.exp(-e.deltaY * 0.0011)));
+  cam.x = wx - (mx - W / 2) / s; cam.y = wy - (my - H / 2) / s; clampCam();
+}, { passive: false });
+function clampCam() {
+  const m = 400;
+  cam.x = Math.max(LO.x - m, Math.min(LO.x + LO.w + m, cam.x));
+  cam.y = Math.max(LO.y - m, Math.min(LO.y + LO.h + m, cam.y));
+}
+cv.addEventListener("click", e => {
+  if (drag && (Math.abs(e.movementX) + Math.abs(e.movementY) > 3)) return;
+  let best = null, bd = 18;
+  for (const r of RES) { const [x, y] = W2S(r.wx, r.wy); const d = Math.hypot(x - e.clientX, y - e.clientY); if (d < bd) { bd = d; best = r; } }
+  if (best) showCard(best, e.clientX, e.clientY); else hideCard();
+});
+// touch pan
+let tst = null;
+cv.addEventListener("touchstart", e => { if (e.touches.length === 1) tst = [e.touches[0].clientX, e.touches[0].clientY, cam.x, cam.y]; });
+cv.addEventListener("touchmove", e => { if (tst && e.touches.length === 1) { cam.x = tst[2] - (e.touches[0].clientX - tst[0]) / s; cam.y = tst[3] - (e.touches[0].clientY - tst[1]) / s; clampCam(); } }, { passive: true });
+
+const $ = id => document.getElementById(id);
+let grade = true;
+$("btnGrade").onclick = () => { grade = !grade; $("btnGrade").classList.toggle("on", grade); };
+$("btnHD").onclick = () => { s = 0.5; cam.x = X18(-115.1740); cam.y = Y18(36.1105); clampCam(); };
+$("btnWide").onclick = () => { s = 0.045; cam.x = (LO.x + LO.w / 2); cam.y = Y18(36.119); clampCam(); };
+$("btnHome").onclick = () => { s = 0.30; cam.x = X18(-115.1714); cam.y = Y18(36.1142); clampCam(); };
+
+function showCard(r, px, py) {
+  const c = $("card"); c.style.display = "block";
+  c.style.left = Math.min(innerWidth - 280, px + 16) + "px";
+  c.style.top = Math.min(innerHeight - 160, py + 16) + "px";
+  $("cardname").textContent = r.n;
+  $("cardname").style.color = r.c;
+  $("cardbody").innerHTML = `<div class="row">ROOF ≈ <b>${r.h} m</b></div><div class="row">CLASS — <b>${r.tag}</b></div><div class="row">GRID — <b>${(360 - 180 - r.wx * 0).toFixed(0) ? "" : ""}${(r.wx / 65536).toFixed(3)}, ${(r.wy / 65536).toFixed(3)} z18</b></div>`;
+}
+function hideCard() { $("card").style.display = "none"; }
+$("cardx").onclick = hideCard;
+
+// ---------- effects ----------
+const rnd = (a, b) => a + Math.random() * (b - a);
+let fw = [];       // fireworks
+let spark = [];    // ambient sparks
+function spawnFw() {
+  const srcs = [RES[0], RES[27], RES[19], RES[25]]; // STRAT, EXCAL, BELLAGIO, NYNY-ish
+  const r = srcs[(Math.random() * srcs.length) | 0];
+  const cx = r.wx + rnd(-30, 30), cy = r.wy + rnd(-30, 30);
+  const col = ["#ff5ea8", "#37e6ff", "#ffd23f", "#59ffa8", "#ff8f6b"][(Math.random() * 5) | 0];
+  const n = 26 + (Math.random() * 18 | 0);
+  for (let i = 0; i < n; i++) { const a = Math.PI * 2 * i / n + rnd(-.1, .1), v = rnd(.5, 1.9); fw.push([cx, cy, Math.cos(a) * v, Math.sin(a) * v - .35, 42 + rnd(0, 26), col]); }
+}
+let lastFw = 0;
+
+// traffic on blvd
+const traffic = [];
+for (let i = 0; i < 46; i++) traffic.push([Math.random(), Math.random() < .5 ? 1 : -1, rnd(.00025, .0009)]);
+
+// ---------- draw ----------
+let t0 = performance.now();
+function frame(t) {
+  const now = t * 0.001;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = "#04070f"; ctx.fillRect(0, 0, W, H);
+
+  // basemap: LO always
+  const [lx, ly] = W2S(LO.x, LO.y);
+  ctx.imageSmoothingEnabled = s < 2.2;
+  ctx.filter = "contrast(1.28) brightness(0.78) saturate(0.6)";
+  ctx.drawImage(imgLO, lx, ly, LO.w * s, LO.h * s);
+  ctx.filter = "none";
+  // HD core overlay
+  if (hdReady && s >= 0.3) {
+    const [hx, hy] = W2S(HD.x, HD.y);
+    ctx.globalAlpha = Math.min(1, (s - 0.3) / 0.15);
+    ctx.drawImage(imgHD, hx, hy, HD.w * s, HD.h * s);
+    ctx.globalAlpha = 1;
+  }
+  // night grade
+  if (grade) {
+    const rx = Math.max(0, lx), ry = Math.max(0, ly), rr = Math.min(W, lx + LO.w * s), rb = Math.min(H, ly + LO.h * s);
+    if (rr > rx && rb > ry) {
+      ctx.save();
+      ctx.beginPath(); ctx.rect(rx, ry, rr - rx, rb - ry); ctx.clip();
+      ctx.globalCompositeOperation = "multiply";
+      ctx.fillStyle = "#6b7ba4"; ctx.fillRect(rx, ry, rr - rx, rb - ry);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = "rgba(14,8,44,0.12)"; ctx.fillRect(rx, ry, rr - rx, rb - ry);
+      // neon hotspots light the real buildings under each node
+      ctx.globalCompositeOperation = "lighter";
+      for (const r of RES) {
+        const [hx, hy] = W2S(r.wx, r.wy);
+        const R2 = (50 + r.h * 0.28) * s + 26;
+        if (hx < -R2 || hx > W + R2 || hy < -R2 || hy > H + R2) continue;
+        const hg = ctx.createRadialGradient(hx, hy, 0, hx, hy, R2);
+        const c = r.c;
+        const hx2 = c.replace("#", ""), a0 = (hx2.slice(0, 2)), a1 = (hx2.slice(2, 4)), a2 = (hx2.slice(4, 6));
+        hg.addColorStop(0, "rgba(" + parseInt(a0, 16) + "," + parseInt(a1, 16) + "," + parseInt(a2, 16) + ",0.50)");
+        hg.addColorStop(0.5, "rgba(" + parseInt(a0, 16) + "," + parseInt(a1, 16) + "," + parseInt(a2, 16) + ",0.18)");
+        hg.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = hg;
+        ctx.beginPath(); ctx.arc(hx, hy, R2, 0, 7); ctx.fill();
+      }
+      ctx.globalCompositeOperation = "source-over";
+      ctx.restore();
+    }
+  }
+  // graticule
+  {
+    const g0 = 512;
+    ctx.strokeStyle = "rgba(55,230,255,0.055)"; ctx.lineWidth = 1;
+    const x0 = Math.floor(((cam.x - W / 2 / s) / g0)) * g0;
+    for (let gx = x0; W2S(gx, 0)[0] < W; gx += g0) { const X = W2S(gx, 0)[0]; ctx.beginPath(); ctx.moveTo(X, 0); ctx.lineTo(X, H); ctx.stroke(); }
+    const y0 = Math.floor(((cam.y - H / 2 / s) / g0)) * g0;
+    for (let gy = y0; W2S(0, gy)[1] < H; gy += g0) { const Y = W2S(0, gy)[1]; ctx.beginPath(); ctx.moveTo(0, Y); ctx.lineTo(W, Y); ctx.stroke(); }
+  }
+
+  // blvd light line
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  ctx.beginPath();
+  BLVD.forEach((p, i) => { const [x, y] = W2S(p[0], p[1]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+  ctx.strokeStyle = "rgba(255,214,150,0.10)"; ctx.lineWidth = Math.max(3, 10 * s); ctx.stroke();
+  ctx.strokeStyle = "rgba(255,225,170,0.30)"; ctx.lineWidth = Math.max(1, 2.2 * s); ctx.stroke();
+
+  // traffic glints
+  for (const tr of traffic) {
+    tr[0] += tr[2] * tr[1]; if (tr[0] > 1) tr[0] = 0; if (tr[0] < 0) tr[0] = 1;
+    const f = tr[0] * (BLVD.length - 1), i = Math.floor(f), fr = f - i;
+    const a = BLVD[i], b = BLVD[Math.min(i + 1, BLVD.length - 1)];
+    const [x, y] = W2S(a[0] + (b[0] - a[0]) * fr, a[1] + (b[1] - a[1]) * fr);
+    if (x < -20 || x > W + 20 || y < -20 || y > H + 20) continue;
+    ctx.fillStyle = tr[1] > 0 ? "rgba(255,240,210,0.75)" : "rgba(255,120,90,0.6)";
+    ctx.fillRect(x - 1, y - 1, 2.4, 2.4);
+  }
+
+  // glowing arterial grid
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const grid = new Path2D();
+  for (const ln of STREETS) {
+    let f = true;
+    for (const [sglng, sglat] of ln) { const [gx, gy] = W2S(X18(sglng), Y18(sglat)); if (f) { grid.moveTo(gx, gy); f = false; } else grid.lineTo(gx, gy); }
+  }
+  const ga = Math.min(0.55, 0.18 + s * 0.9);
+  ctx.strokeStyle = `rgba(255,178,100,${ga})`; ctx.lineWidth = 7 * s + 2.4; ctx.stroke(grid);
+  ctx.strokeStyle = `rgba(255,236,195,${Math.min(0.85, ga + 0.35)})`; ctx.lineWidth = 2.2 * s + 0.8; ctx.stroke(grid);
+  for (const ip of CROSS) {
+    const [ix3, iy3] = W2S(X18(ip[0]), Y18(ip[1]));
+    if (ix3 < -30 || ix3 > W + 30 || iy3 < -30 || iy3 > H + 30) continue;
+    const R3 = 16 * s + 5;
+    const ig = ctx.createRadialGradient(ix3, iy3, 0, ix3, iy3, R3);
+    ig.addColorStop(0, "rgba(255,238,195,0.6)"); ig.addColorStop(1, "rgba(255,190,110,0)");
+    ctx.fillStyle = ig; ctx.beginPath(); ctx.arc(ix3, iy3, R3, 0, 7); ctx.fill();
+  }
+  ctx.restore();
+
+  // light-pollution haze over the Strip corridor
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  {
+    const [cx0, cy0] = W2S(X18(-115.1710), Y18(36.1180));
+    const [cx1, cy1] = W2S(X18(-115.1695), Y18(36.1433));
+    const hz = ctx.createLinearGradient(cx0, cy0, cx1, cy1);
+    hz.addColorStop(0, `rgba(255,150,70,${Math.min(0.16, 0.04 + s * 0.4)})`);
+    hz.addColorStop(1, `rgba(210,90,160,${Math.min(0.12, 0.03 + s * 0.3)})`);
+    ctx.strokeStyle = hz; ctx.lineWidth = 180 * s + 40; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(cx0, cy0); ctx.lineTo(cx1, cy1); ctx.stroke();
+  }
+  ctx.restore();
+  // baked emissive lights layer (above the multiply grade)
+  if (l2Ready) {
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = 1;
+    ctx.drawImage(imgL2LO, lx, ly, LO.w * s, LO.h * s);
+    if (hdReady && s >= 0.3) {
+      const [hx9, hy9] = W2S(HD.x, HD.y);
+      ctx.globalAlpha = Math.min(1, (s - 0.3) / 0.15);
+      ctx.drawImage(imgL2HD, hx9, hy9, HD.w * s, HD.h * s);
+    }
+    ctx.restore();
+  }
+
+  // light beams (LUXOR kind 5, PARIS kind 3)
+  for (const r of RES) {
+    if (r.kind !== 5 && r.kind !== 3) continue;
+    const [x, y] = W2S(r.wx, r.wy);
+    if (x < -90 || x > W + 90 || y < -90 || y > H + 90) continue;
+    const ang = now * (r.kind === 5 ? 0.32 : 0.5) + (r.kind === 5 ? 2 : 5);
+    const L = 260 * Math.max(.5, s);
+    const g = ctx.createLinearGradient(x, y, x + Math.cos(ang) * L, y + Math.sin(ang) * L);
+    g.addColorStop(0, r.kind === 5 ? "rgba(255,230,140,0.30)" : "rgba(255,215,160,0.24)");
+    g.addColorStop(1, "rgba(255,230,150,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(ang - .07) * L, y + Math.sin(ang - .07) * L);
+    ctx.lineTo(x + Math.cos(ang + .07) * L, y + Math.sin(ang + .07) * L);
+    ctx.fill();
+  }
+
+  // bellagio fountains
+  {
+    const [lx2, ly2] = W2S(LAKE[0], LAKE[1]);
+    const R2 = 42 * s;
+    for (let i = 0; i < 22; i++) {
+      const ph = now * 2.1 + i * 1.37;
+      const j = Math.max(0, Math.sin(ph));
+      const ox = Math.sin(i * 3.7) * R2 * .8, oy = Math.cos(i * 2.3) * R2 * .28;
+      const hgt = j * 16 * s;
+      if (hgt > 0.5) {
+        ctx.fillStyle = `rgba(190,255,235,${0.16 + j * 0.5})`;
+        ctx.fillRect(lx2 + ox - .8, ly2 + oy - hgt, 1.7, hgt);
+      }
+    }
+  }
+
+  // sphere LED pulse
+  {
+    const r = RES.find(q => q.kind === 2);
+    const [x, y] = W2S(r.wx, r.wy);
+    const Rp = 47 * s / 2;
+    const hue = (now * 40) % 360;
+    for (let k = 0; k < 3; k++) {
+      const rr = Rp * (0.7 + .45 * ((now * .9 + k / 3) % 1));
+      ctx.strokeStyle = `hsla(${hue + k * 40},100%,64%,${0.5 * (1 - (rr / (Rp * 1.15) - .7))})`;
+      ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, rr, 0, 7); ctx.stroke();
+    }
+    const g = ctx.createRadialGradient(x, y, 0, x, y, Rp * 2.2);
+    g.addColorStop(0, `hsla(${hue},100%,60%,0.55)`); g.addColorStop(1, `hsla(${hue},100%,60%,0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, Rp * 2.2, 0, 7); ctx.fill();
+  }
+
+  // lit-window shimmer on resort footprints
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  for (const r of RES) {
+    const [x, y] = W2S(r.wx, r.wy);
+    if (x < -60 || x > W + 60 || y < -60 || y > H + 60) continue;
+    const rad = 10 + r.h * 0.06;
+    let seed = (r.wx * 7 + r.wy * 13) % 1000;
+    const rr_ = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    for (let i = 0; i < 9; i++) {
+      const a = rr_() * 6.28, d = rr_() * rad;
+      const wx2 = x + Math.cos(a) * d, wy2 = y + Math.sin(a) * d * 0.7;
+      const tw = 0.35 + 0.65 * Math.abs(Math.sin(now * (1 + rr_() * 2) + i * 2.1));
+      ctx.fillStyle = i % 3 === 0 ? `rgba(255,190,120,${0.5 * tw})` : `rgba(255,240,200,${0.42 * tw})`;
+      ctx.fillRect(wx2, wy2, 1.6, 1.6);
+    }
+  }
+  ctx.restore();
+
+  // resort nodes
+  ctx.textAlign = "left";
+  for (const r of RES) {
+    const [x, y] = W2S(r.wx, r.wy);
+    if (x < -40 || x > W + 40 || y < -40 || y > H + 40) continue;
+    const fl = 0.82 + 0.18 * Math.sin(now * 3.1 + r.wx * .07);
+    const gr = (r.kind === 2 ? 40 : 18 + r.h * 0.09) * s + 6;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, gr);
+    g.addColorStop(0, r.c + "cc"); g.addColorStop(0.35, r.c + "55"); g.addColorStop(1, r.c + "00");
+    ctx.globalAlpha = 0.42 * fl; ctx.fillStyle = g;
+    ctx.fillRect(x - gr, y - gr, gr * 2, gr * 2);
+    ctx.globalAlpha = 1;
+    // core + ring
+    ctx.fillStyle = "#fff"; ctx.globalAlpha = .95 * fl;
+    ctx.fillRect(x - 1.5, y - 1.5, 3, 3); ctx.globalAlpha = 1;
+    ctx.strokeStyle = r.c; ctx.globalAlpha = .8; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(x, y, 5.5, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
+    // label (major only when zoomed out)
+    const major = r.h >= 100 || r.kind > 1;
+    if (major || s > 0.25) {
+      ctx.font = "10px JetBrains Mono, monospace";
+      ctx.fillStyle = "rgba(6,10,22,0.7)";
+      const wl = ctx.measureText(r.n).width;
+      ctx.fillRect(x + 9, y - 13, wl + 6, 12);
+      ctx.fillStyle = r.c; ctx.fillText(r.n, x + 12, y - 3.5);
+      ctx.strokeStyle = r.c + "66"; ctx.beginPath(); ctx.moveTo(x + 6, y - 7); ctx.lineTo(x + 9, y - 7); ctx.stroke();
+    }
+  }
+  ctx.restore();
+
+  // fireworks (additive, screen space)
+  if (now - lastFw > rnd(2.6, 6.2)) { spawnFw(); lastFw = now; }
+  ctx.save(); ctx.globalCompositeOperation = "lighter";
+  fw = fw.filter(p => p[4] > 0);
+  for (const p of fw) {
+    p[0] += p[2]; p[1] += p[3]; p[3] += 0.014; p[2] *= 0.985; p[3] *= 0.985; p[4]--;
+    const [x, y] = W2S(p[0], p[1]);
+    ctx.globalAlpha = Math.min(1, p[4] / 34);
+    ctx.fillStyle = p[5]; ctx.fillRect(x - 1, y - 1, 2.2, 2.2);
+  }
+  ctx.restore(); ctx.globalAlpha = 1;
+
+  // scan sweep
+  const sy = (now * 46) % (H + 240) - 120;
+  const sg = ctx.createLinearGradient(0, sy - 90, 0, sy + 90);
+  sg.addColorStop(0, "rgba(55,230,255,0)"); sg.addColorStop(.5, "rgba(55,230,255,0.045)"); sg.addColorStop(1, "rgba(55,230,255,0)");
+  ctx.fillStyle = sg; ctx.fillRect(0, sy - 90, W, 180);
+
+  // readouts
+  const lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * cam.y / R))) * 180 / Math.PI;
+  const lng = cam.x / R * 360 - 180;
+  document.getElementById("coordline").textContent =
+    `${lat.toFixed(4)} N / ${Math.abs(lng).toFixed(4)} W  Z${(18.69 + Math.log2(s)).toFixed(1)} · s=${s.toFixed(2)}`;
+  if (((t / 500) | 0) !== frame._f) {
+    frame._f = (t / 500) | 0;
+    const vis = RES.filter(r => { const [x, y] = W2S(r.wx, r.wy); return x > -10 && x < W + 10 && y > -10 && y < H + 10; }).length;
+    const msgs = ["SCAN.ACTIVE", `NODES ${vis}/${RES.length}`, `GRID Z${(18.69 + Math.log2(s)).toFixed(1)} LOCK`, "IMAGERY MAXAR", "NEON.SYNC 99.6%", "THERMAL NOMINAL", "PYRO ARMED"];
+    document.getElementById("feed").innerHTML = msgs.map((m, i) => `<div>${i % 3 === 0 ? '<span class=hot>▸</span> ' : ""}${i % 4 === 2 ? '<span class=ok>' + m + '</span>' : m}</div>`).join("");
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+window.__G = { cam: () => ({ x: cam.x, y: cam.y, s }), go: (lng, lat, ss) => { cam.x = X18(lng); cam.y = Y18(lat); if (ss) s = ss; clampCam(); } };
+</script>
+</body>
+</html>
